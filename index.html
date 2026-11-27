@@ -4,10 +4,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>صرافة بشار</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#0e5a4a">
+<meta name="theme-color" content="#cfe5f6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="صرافة">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
@@ -18,33 +18,30 @@
 <style>
 /* Layout: app shell — top bar with tabs, one working panel at a time (RTL) */
 :root{
-  --bg:#f3f5f2; --surface:#ffffff; --ink:#14231f; --muted:#5b6b66; --line:#d6ddd8;
-  --accent:#0e5a4a; --accent-soft:#dcebe5; --brass:#a8741a; --brass-soft:#f4e8d2;
+  /* Light blue + silver + matte white. Light theme only, by the owner's choice. */
+  --bg:#eceff2; --surface:#f6f7f8; --ink:#1c2833; --muted:#5d6975; --line:#c9d0d7;
+  --accent:#2a78b8; --accent-soft:#dcebf7; --brass:#66717c; --brass-soft:#e3e7eb;
+  --top:#cfe5f6; --top-ink:#173f63;
   --ok:#1f7a3f; --warn:#a36200; --bad:#b3261e; --info:#2456c7;
-  --g1:#e3eefb; --g2:#e6f5d6; --g3:#fbefd9; --g4:#efe4f7; --sel:#ffe9a8;
+  --g1:#e1eefa; --g2:#e9ecef; --g3:#dcf1f5; --g4:#e7e8f4; --sel:#fff0b3;
   --f-display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
   --f-body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
   --f-num:"IBM Plex Mono",ui-monospace,monospace;
+  color-scheme:light;
 }
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0f1715; --surface:#16211e; --ink:#e4ece8; --muted:#97a8a2; --line:#2b3a36;
-  --accent:#5cc3a6; --accent-soft:#1c3530; --brass:#e0b15a; --brass-soft:#3a2f1b;
-  --ok:#5fcf87; --warn:#f0a94a; --bad:#ff8a80; --info:#7aa7ff;
-  --g1:#1b2a3d; --g2:#1f3320; --g3:#3a2e18; --g4:#2e2240; --sel:#4a3d12; color-scheme:dark}}
-:root[data-theme="dark"]{
-  --bg:#0f1715; --surface:#16211e; --ink:#e4ece8; --muted:#97a8a2; --line:#2b3a36;
-  --accent:#5cc3a6; --accent-soft:#1c3530; --brass:#e0b15a; --brass-soft:#3a2f1b;
-  --ok:#5fcf87; --warn:#f0a94a; --bad:#ff8a80; --info:#7aa7ff;
-  --g1:#1b2a3d; --g2:#1f3320; --g3:#3a2e18; --g4:#2e2240; --sel:#4a3d12; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
-body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--accent)}
-.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--accent);color:var(--surface);
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--top)}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--top);color:var(--top-ink);border-bottom:1px solid var(--line);
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px 0}
 .top-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;max-width:1200px;margin-inline:auto}
 .brand{font-family:var(--f-display);font-size:20px}
 .status{font-size:12px;opacity:.85}
 nav{display:flex;gap:2px;overflow-x:auto;max-width:1200px;margin-inline:auto;scrollbar-width:none}
-nav a{color:var(--surface);text-decoration:none;padding:8px 14px;white-space:nowrap;border-radius:8px 8px 0 0;font-size:14px;opacity:.85}
+nav a{color:var(--top-ink);text-decoration:none;padding:8px 14px;white-space:nowrap;border-radius:8px 8px 0 0;font-size:14px;opacity:.85}
+.ic{width:18px;height:18px;fill:url(#gold);vertical-align:-3px;margin-inline-end:6px;filter:drop-shadow(0 1px 0 rgba(90,60,5,.45)) drop-shadow(0 0 1px rgba(255,255,255,.9))}
+.ic.coin{width:26px;height:26px;vertical-align:-6px;margin-inline-end:4px}
+nav a.on .ic{filter:drop-shadow(0 1px 1px rgba(90,60,5,.55)) drop-shadow(0 0 2px rgba(255,236,160,.9))}
 nav a.on{background:var(--bg);color:var(--accent);opacity:1;font-weight:600}
 main{max-width:1200px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px;display:flex;flex-direction:column;gap:16px}
 h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.3}
@@ -60,7 +57,7 @@ input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-
 button{font:inherit;font-size:14px;padding:8px 16px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
 button:hover{border-color:var(--accent)}
 button:focus-visible,a:focus-visible,tr:focus-visible{outline:2px solid var(--brass);outline-offset:2px}
-button.p{background:var(--accent);border-color:var(--accent);color:var(--surface);font-weight:600}
+button.p{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:600}
 button.d{color:var(--bad);border-color:var(--bad)}
 button:disabled{opacity:.5;cursor:not-allowed}
 .hint{font-size:12px;color:var(--muted)}
@@ -77,7 +74,7 @@ td.n,th.n{text-align:end;white-space:nowrap}
 .lana{color:var(--bad)} .alayna{color:var(--ok)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:99px;background:var(--bg);cursor:pointer;color:var(--ink)}
-.chip.on{background:var(--accent);color:var(--surface);border-color:var(--accent)}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .st tbody tr.c0{background:var(--g1)} .st tbody tr.c1{background:var(--g2)} .st tbody tr.c2{background:var(--g3)} .st tbody tr.c3{background:var(--g4)}
 .st tbody tr.sel{background:var(--sel)}
 .st tbody tr.gs td{border-top:2px solid var(--surface)}
@@ -106,17 +103,34 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 </style>
 </head><body>
 <div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#7a5410"/><stop offset=".2" stop-color="#f9e7a0"/><stop offset=".38" stop-color="#c9971f"/>
+      <stop offset=".52" stop-color="#fff8d6"/><stop offset=".7" stop-color="#b8861a"/><stop offset="1" stop-color="#6e4c0c"/>
+    </linearGradient>
+  </defs>
+  <symbol id="i-bal" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 7a3 3 0 0 1 3-3h11a1 1 0 0 1 0 2H6a1 1 0 0 0 0 2h13a2 2 0 0 1 2 2v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7zm14 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></symbol>
+  <symbol id="i-tr" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M7 3l-5 5 5 5V9.5h11v-3H7V3zm10 8v3.5H6v3h11V21l5-5-5-5z"/></symbol>
+  <symbol id="i-cash" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M1 6h22v12H1V6zm11 2.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7zM4 9v6h1.5V9H4zm14.5 0v6H20V9h-1.5z"/></symbol>
+  <symbol id="i-ex" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 3a9 9 0 0 1 8.3 5.5H23L19 13l-4-4.5h2.6A6.5 6.5 0 0 0 6 9.4L3.8 8.3A9 9 0 0 1 12 3zM5 11l4 4.5H6.4A6.5 6.5 0 0 0 18 14.6l2.2 1.1A9 9 0 0 1 3.7 15.5H1L5 11z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M5 1h10l5 5v17H5V1zm3 9v2h9v-2H8zm0 4v2h9v-2H8zm0 4v2h6v-2H8z"/></symbol>
+  <symbol id="i-log" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm-1.3 5v7.4l5.6 3.3 1.3-2.2-4.3-2.5V6h-2.6z"/></symbol>
+  <symbol id="i-usr" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M9 3a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm8.5 2a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM0 21c0-4.5 4-7 9-7s9 2.5 9 7H0zm19.5 0c0-2.3-.8-4.1-2.2-5.4 3.6.2 6.7 2 6.7 5.4h-4.5z"/></symbol>
+  <symbol id="i-pct" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6.5 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm11 12a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM19 2.5l2.5 2.5L5 21.5 2.5 19z"/></symbol>
+  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><circle cx="12" cy="12" r="8.3" fill="none" stroke="#8a6212" stroke-opacity=".55" stroke-width="1"/><path fill="#7a5410" fill-opacity=".85" d="M12.9 5.5v1.4c1.6.2 2.8 1 3.3 2.4l-1.9.8c-.3-.8-1-1.3-2-1.3-1.1 0-1.7.5-1.7 1.1 0 .7.6 1 2.1 1.4 2.2.6 3.7 1.3 3.7 3.4 0 1.6-1.2 2.8-3.5 3v1.4h-1.8v-1.4c-1.9-.2-3.2-1.2-3.6-2.8l2-.7c.3 1 1.1 1.6 2.4 1.6 1.2 0 1.9-.5 1.9-1.2 0-.8-.7-1.1-2.3-1.5-2-.5-3.5-1.2-3.5-3.2 0-1.5 1.1-2.6 3.1-2.9V5.5h1.8z"/></symbol>
+</svg>
 <header class="top">
-  <div class="top-row"><span class="brand">صرافة · الحوالات والأرصدة</span><span><span class="status" id="status">جارِ تحميل البيانات…</span> <button type="button" id="logout" hidden style="padding:2px 10px;font-size:12px">خروج</button></span></div>
+  <div class="top-row"><span class="brand"><svg class="ic coin" aria-hidden="true"><use href="#i-coin"/></svg> صرافة · الحوالات والأرصدة</span><span><span class="status" id="status">جارِ تحميل البيانات…</span> <button type="button" id="logout" hidden style="padding:2px 10px;font-size:12px">خروج</button></span></div>
   <nav id="nav" aria-label="الأقسام">
-    <a href="#balances">الأرصدة</a>
-    <a href="#transfer">حوالة جديدة</a>
-    <a href="#move">حركة نقدية</a>
-    <a href="#cut">قطع / تحويل عملة</a>
-    <a href="#statement">كشف حساب</a>
-    <a href="#log">سجل العمليات</a>
-    <a href="#accounts">الحسابات</a>
-    <a href="#rates">أسعار اليوم والإعدادات</a>
+    <a href="#balances"><svg class="ic" aria-hidden="true"><use href="#i-bal"/></svg>الأرصدة</a>
+    <a href="#transfer"><svg class="ic" aria-hidden="true"><use href="#i-tr"/></svg>حوالة جديدة</a>
+    <a href="#move"><svg class="ic" aria-hidden="true"><use href="#i-cash"/></svg>حركة نقدية</a>
+    <a href="#cut"><svg class="ic" aria-hidden="true"><use href="#i-ex"/></svg>قطع / تحويل عملة</a>
+    <a href="#statement"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg>كشف حساب</a>
+    <a href="#log"><svg class="ic" aria-hidden="true"><use href="#i-log"/></svg>سجل العمليات</a>
+    <a href="#accounts"><svg class="ic" aria-hidden="true"><use href="#i-usr"/></svg>الحسابات</a>
+    <a href="#rates"><svg class="ic" aria-hidden="true"><use href="#i-pct"/></svg>أسعار اليوم والإعدادات</a>
   </nav>
 </header>
 <main id="app"><div class="empty">جارِ تحميل البيانات…</div></main>
@@ -241,7 +255,7 @@ async function loadAll() {
   settings = {...structuredClone(DEFAULT_SETTINGS), ...(st.data?.data || {})};
   if (cancelling) cancelling = ops.find(x => x.id === cancelling.id) || null;
   loaded = {acc:true, ops:true, set:true};
-  setStatus("محفوظ أونلاين"); route(true);
+  setStatus("متصل · البيانات محفوظة"); route(true);
 }
 function setStatus(t) { $("#status").textContent = t; }
 
@@ -261,8 +275,8 @@ function route(fromData) {
   views[name]();
 }
 window.addEventListener("hashchange", () => route(false));
-const roGuard = () => readOnly ? `<div class="banner">لا يمكنك التعديل من هذا الحساب، العرض فقط.</div>` : "";
-const needAccounts = () => accounts.length ? "" : `<div class="banner">ما في حسابات بعد. <a href="#accounts">أضف أول حساب</a> (مثلاً «دبي، باسم بشار»).</div>`;
+const roGuard = () => readOnly ? `<div class="banner">لا يمكن التعديل من هذا الحساب، العرض فقط.</div>` : "";
+const needAccounts = () => accounts.length ? "" : `<div class="banner">لا توجد حسابات بعد. <a href="#accounts">أضف أول حساب</a> (مثلاً «دبي، باسم بشار»).</div>`;
 
 // ----- balances -----
 views.balances = () => {
@@ -294,7 +308,7 @@ views.transfer = () => {
     <div class="grid">
       <label>المبلغ والعملة<span class="pair"><input id="t_amt" inputmode="decimal" placeholder="0.00"><select id="t_cur">${curOpts("USD")}</select></span></label>
       <label>عملة الاستلام<select id="t_tocur">${curOpts("USD")}</select></label>
-      <label><span id="t_ratelbl">سعر الصرف (تقدر تعدّله)</span><input id="t_rate" inputmode="decimal"><span class="hint" id="t_ratehint"></span></label>
+      <label><span id="t_ratelbl">سعر الصرف (قابل للتعديل)</span><input id="t_rate" inputmode="decimal"><span class="hint" id="t_ratehint"></span></label>
     </div>
     <div class="grid">
       <label>الدولة<select id="t_country"><option value="">اختر الدولة</option>${settings.countries.map(c=>`<option>${esc(c)}</option>`).join("")}</select></label>
@@ -306,7 +320,7 @@ views.transfer = () => {
     <div class="summary" id="t_sum"></div>
     <div class="err" id="t_err" role="alert"></div>
     <div class="btns"><button class="p" type="submit" ${readOnly?"disabled":""}>حفظ الحوالة</button><span class="okmsg" id="t_ok"></span></div>
-    <p class="hint">طريقة العمولة الحالية: ${settings.feeMode==="top"?"تنضاف فوق المبلغ وتنخصم من المرسل":"تنخصم من المبلغ المرسل فيوصل أقل"}. تقدر تغيّرها من «أسعار اليوم والإعدادات».</p>
+    <p class="hint">طريقة العمولة الحالية: ${settings.feeMode==="top"?"تُضاف إلى المبلغ وتُخصم من المرسل":"تُخصم من المبلغ المرسل فيصل مبلغ أقل"}. يمكن تغييرها من «أسعار اليوم والإعدادات».</p>
   </form>`;
   const f = id => $("#" + id);
   let rateTouched = false;
@@ -317,19 +331,19 @@ views.transfer = () => {
   f("t_quick").innerHTML = quick.map(q => `<button type="button" class="chip">${esc(q)}</button>`).join("");
   f("t_quick").querySelectorAll("button").forEach(b => b.onclick = () => { f("t_note").value = b.textContent; });
   const setRate = () => { const r = rateOf(f("t_cur").value, f("t_tocur").value), a = f("t_cur").value, b = f("t_tocur").value;
-    f("t_ratelbl").textContent = a === b ? "سعر الصرف" : inv() ? `السعر: كم ${a} لكل 1 ${b} (تقدر تعدّله)` : `السعر: كم ${b} لكل 1 ${a} (تقدر تعدّله)`;
+    f("t_ratelbl").textContent = a === b ? "سعر الصرف" : inv() ? `السعر: كم ${a} لكل 1 ${b} (قابل للتعديل)` : `السعر: كم ${b} لكل 1 ${a} (قابل للتعديل)`;
     if (!rateTouched) f("t_rate").value = fmtRate(r && r < 1 ? 1 / r : r); calc(); };
   const calc = () => {
     const amt = +f("t_amt").value.replace(/,/g,""), rate = effRate(), fee = +f("t_fee").value, cur = f("t_cur").value, to = f("t_tocur").value;
     const def = rateOf(cur, to), shownDef = def && def < 1 ? 1 / def : def;
-    f("t_ratehint").textContent = cur===to ? "نفس العملة" : (shownDef && Math.abs(+f("t_rate").value - +fmtRate(shownDef)) > 1e-9 ? `سعر اليوم ${fmtRate(shownDef)} · عدّلته لهالحوالة` : "سعر اليوم");
+    f("t_ratehint").textContent = cur===to ? "نفس العملة" : (shownDef && Math.abs(+f("t_rate").value - +fmtRate(shownDef)) > 1e-9 ? `سعر اليوم ${fmtRate(shownDef)} · عُدّل لهذه الحوالة` : "سعر اليوم");
     const bal = (balances()[f("t_from").value]||{})[cur] || 0;
     f("t_bal").value = f("t_from").value ? fmtBal(bal) + " " + cur + " " + side(bal) : "";
-    if (!(amt > 0)) { f("t_sum").innerHTML = `<span>اكتب المبلغ لتشوف الحساب</span><span></span>`; return; }
+    if (!(amt > 0)) { f("t_sum").innerHTML = `<span>أدخل المبلغ لعرض الحساب</span><span></span>`; return; }
     const c = compute(amt, fee||0, rate||0);
     f("t_sum").innerHTML = `<span>العمولة ${esc(fee||0)}%</span><span class="num">${fmt(c.fee)} ${esc(cur)}</span>
-      <span>ينخصم من المرسل</span><span class="num big">${fmt(c.fromTotal)} ${esc(cur)}</span>
-      <span>يوصل للمستلم</span><span class="num big">${fmt(c.toAmt)} ${esc(to)}</span>`;
+      <span>يُخصم من المرسل</span><span class="num big">${fmt(c.fromTotal)} ${esc(cur)}</span>
+      <span>يصل إلى المستلم</span><span class="num big">${fmt(c.toAmt)} ${esc(to)}</span>`;
   };
   ["t_amt","t_fee","t_from"].forEach(id => f(id).addEventListener("input", calc));
   f("t_rate").addEventListener("input", () => { rateTouched = true; calc(); });
@@ -343,9 +357,9 @@ views.transfer = () => {
     const errs = [];
     if (!from) errs.push("اختر الحساب المرسل");
     if (!to) errs.push("اختر الحساب المستلم");
-    if (from && from === to && cur === tocur) errs.push("المرسل والمستلم نفس الحساب ونفس العملة");
-    if (!(amt > 0)) errs.push("المبلغ لازم يكون أكبر من صفر");
-    if (!(rate > 0)) errs.push("سعر الصرف لازم يكون أكبر من صفر");
+    if (from && from === to && cur === tocur) errs.push("الحساب المرسل والمستلم هما الحساب نفسه بالعملة نفسها");
+    if (!(amt > 0)) errs.push("المبلغ يجب أن يكون أكبر من الصفر");
+    if (!(rate > 0)) errs.push("سعر الصرف يجب أن يكون أكبر من الصفر");
     if (!(fee >= 0 && fee < 100)) errs.push("نسبة العمولة بين 0 و 100");
     if (!f("t_date").value) errs.push("اختر التاريخ");
     if (errs.length) { f("t_err").textContent = errs.join(" · "); return; }
@@ -359,8 +373,8 @@ views.transfer = () => {
     const op = {type:"transfer", date:f("t_date").value, createdAt:Date.now(), status:"active", note, country:f("t_country").value,
       amount:amt, cur, tocur, rate, rateTxt, feePct:fee, feeAmt:c.fee, feeMode:settings.feeMode, from, to, entries};
     const btn = f("tf").querySelector("button[type=submit]"); btn.disabled = true;
-    try { await saveOp(op); f("t_ok").textContent = `انحفظت الحوالة #${op.no}`; f("t_amt").value = ""; f("t_note").value = ""; calc(); }
-    catch(err) { f("t_err").textContent = "ما انحفظت: " + (err.message || err.code || "خطأ"); }
+    try { await saveOp(op); f("t_ok").textContent = `حُفظت الحوالة #${op.no}`; f("t_amt").value = ""; f("t_note").value = ""; calc(); }
+    catch(err) { f("t_err").textContent = "تعذّر الحفظ: " + (err.message || err.code || "خطأ"); }
     finally { btn.disabled = readOnly; }
   };
 };
@@ -397,7 +411,7 @@ views.move = () => {
     const amt = r2(+f("m_amt").value.replace(/,/g,"")), fee = +f("m_fee").value, acc = f("m_acc").value, cur = f("m_cur").value, type = f("m_type").value, sd = f("m_side").value;
     const errs = [];
     if (!acc) errs.push("اختر الحساب");
-    if (!(amt > 0)) errs.push("المبلغ لازم يكون أكبر من صفر");
+    if (!(amt > 0)) errs.push("المبلغ يجب أن يكون أكبر من الصفر");
     if (!(fee >= 0 && fee < 100)) errs.push("نسبة العمولة بين 0 و 100");
     if (errs.length) { f("m_err").textContent = errs.join(" · "); return; }
     const note = f("m_note").value.trim(), feeAmt = r2(amt * fee / 100);
@@ -406,8 +420,8 @@ views.move = () => {
     if (feeAmt > 0) entries.push({acc, cur, debit:feeAmt, credit:0, kind:"عمولة", fee:true, desc:`عمولة ${fee}% ${desc}`, recon:""});
     const op = {type, date:f("m_date").value || today(), createdAt:Date.now(), status:"active", note, amount:amt, cur, feePct:fee, feeAmt, from:acc, entries};
     const btn = f("mf").querySelector("button[type=submit]"); btn.disabled = true;
-    try { await saveOp(op); f("m_ok").textContent = `انحفظت الحركة #${op.no}`; f("m_amt").value = ""; f("m_note").value = ""; }
-    catch(err) { f("m_err").textContent = "ما انحفظت: " + (err.message || err.code || "خطأ"); }
+    try { await saveOp(op); f("m_ok").textContent = `حُفظت الحركة #${op.no}`; f("m_amt").value = ""; f("m_note").value = ""; }
+    catch(err) { f("m_err").textContent = "تعذّر الحفظ: " + (err.message || err.code || "خطأ"); }
     finally { btn.disabled = readOnly; }
   };
 };
@@ -417,7 +431,7 @@ views.cut = () => {
   $("#app").innerHTML = `${roGuard()}${needAccounts()}
   <h1>قطع / تحويل عملة <span class="num hint">#${nextNo()}</span></h1>
   <form class="card" id="cf" novalidate>
-    <p class="hint">يُضاف المبلغ للحساب (علينا) بالعملة الأولى${settings.cutBothLegs ? "، ويُخصم المقابل (لنا) بالعملة الثانية من نفس الحساب" : "، والعملة الثانية تُكتب بالبيان فقط"}. تقدر تغيّر هالشي من الإعدادات.</p>
+    <p class="hint">يُضاف المبلغ للحساب (علينا) بالعملة الأولى${settings.cutBothLegs ? "، ويُخصم المقابل (لنا) بالعملة الثانية من نفس الحساب" : "، والعملة الثانية تُذكر في البيان فقط"}. يمكن تغيير ذلك من الإعدادات.</p>
     <div class="grid">
       <label>التاريخ<input type="date" id="c_date" value="${today()}"></label>
       <label>الحساب<select id="c_acc">${accOpts("")}</select></label>
@@ -425,7 +439,7 @@ views.cut = () => {
     <div class="grid">
       <label>المبلغ والعملة<span class="pair"><input id="c_amt" inputmode="decimal" placeholder="0.00"><select id="c_cur">${curOpts("USD")}</select></span></label>
       <label>مقابل عملة<select id="c_to">${curOpts("SYP")}</select></label>
-      <label><span id="c_ratelbl">السعر (تقدر تعدّله)</span><input id="c_rate" inputmode="decimal"></label>
+      <label><span id="c_ratelbl">السعر (قابل للتعديل)</span><input id="c_rate" inputmode="decimal"></label>
     </div>
     <label>البيان / الملاحظات<textarea id="c_note" maxlength="300"></textarea></label>
     <div class="summary" id="c_sum"></div>
@@ -437,7 +451,7 @@ views.cut = () => {
   const inv = () => rateOf(f("c_cur").value, f("c_to").value) < 1;
   const effRate = () => { const v = +f("c_rate").value; return v > 0 ? (inv() ? 1 / v : v) : 0; };
   const calc = () => { const amt = +f("c_amt").value.replace(/,/g,""), rate = effRate();
-    f("c_sum").innerHTML = amt > 0 && rate > 0 ? `<span>المقابل</span><span class="num big">${fmt(r2(amt*rate))} ${esc(f("c_to").value)}</span>` : `<span>اكتب المبلغ والسعر</span><span></span>`; };
+    f("c_sum").innerHTML = amt > 0 && rate > 0 ? `<span>المقابل</span><span class="num big">${fmt(r2(amt*rate))} ${esc(f("c_to").value)}</span>` : `<span>أدخل المبلغ والسعر</span><span></span>`; };
   const setRate = () => { const r = rateOf(f("c_cur").value, f("c_to").value), a = f("c_cur").value, b = f("c_to").value;
     f("c_ratelbl").textContent = inv() ? `السعر: كم ${a} لكل 1 ${b}` : `السعر: كم ${b} لكل 1 ${a}`;
     if (!touched) f("c_rate").value = fmtRate(r && r < 1 ? 1 / r : r); calc(); };
@@ -450,8 +464,8 @@ views.cut = () => {
     const amt = r2(+f("c_amt").value.replace(/,/g,"")), rate = effRate(), rateTxt = f("c_rate").value.trim(), acc = f("c_acc").value, cur = f("c_cur").value, to = f("c_to").value;
     const errs = [];
     if (!acc) errs.push("اختر الحساب");
-    if (!(amt > 0)) errs.push("المبلغ لازم يكون أكبر من صفر");
-    if (!(rate > 0)) errs.push("السعر لازم يكون أكبر من صفر");
+    if (!(amt > 0)) errs.push("المبلغ يجب أن يكون أكبر من الصفر");
+    if (!(rate > 0)) errs.push("السعر يجب أن يكون أكبر من الصفر");
     if (cur === to) errs.push("اختر عملتين مختلفتين");
     if (errs.length) { f("c_err").textContent = errs.join(" · "); return; }
     const other = r2(amt * rate), note = f("c_note").value.trim();
@@ -460,8 +474,8 @@ views.cut = () => {
     if (settings.cutBothLegs) entries.push({acc, cur:to, debit:other, credit:0, kind:"قطع", desc, recon:""});
     const op = {type:"cut", date:f("c_date").value || today(), createdAt:Date.now(), status:"active", note, amount:amt, cur, tocur:to, rate, rateTxt, from:acc, entries};
     const btn = f("cf").querySelector("button[type=submit]"); btn.disabled = true;
-    try { await saveOp(op); f("c_ok").textContent = `انحفظ القطع #${op.no}`; f("c_amt").value = ""; f("c_note").value = ""; calc(); }
-    catch(err) { f("c_err").textContent = "ما انحفظ: " + (err.message || err.code || "خطأ"); }
+    try { await saveOp(op); f("c_ok").textContent = `حُفظ القطع #${op.no}`; f("c_amt").value = ""; f("c_note").value = ""; calc(); }
+    catch(err) { f("c_err").textContent = "تعذّر الحفظ: " + (err.message || err.code || "خطأ"); }
     finally { btn.disabled = readOnly; }
   };
 };
@@ -526,7 +540,7 @@ views.statement = () => {
       <thead><tr><th>العملية</th><th>التاريخ</th><th>البيان</th><th class="n">مدين / لنا</th><th class="n">دائن / علينا</th><th class="n">الرصيد</th><th>الحالة</th></tr></thead>
       <tbody>
         <tr><td></td><td class="num">${esc(ui.stFrom||"")}</td><td>رصيد سابق</td><td class="n num">0.00</td><td class="n num">0.00</td><td class="n num ${sideCls(pre)}">${fmtBal(pre)}</td><td></td></tr>
-        ${body || `<tr><td colspan="7" class="empty">لا توجد حركات بهالعملة ضمن الفترة</td></tr>`}
+        ${body || `<tr><td colspan="7" class="empty">لا توجد حركات بهذه العملة ضمن الفترة المحددة</td></tr>`}
       </tbody>
       <tfoot><tr><td colspan="3">المجموع · <span class="num">${shown.length}</span> سجل</td><td class="n num">${fmt(sumD)}</td><td class="n num">${fmt(sumC)}</td><td class="n num ${sideCls(finalBal)}">${fmtBal(finalBal)}</td><td></td></tr></tfoot>
     </table></div>
@@ -567,7 +581,7 @@ views.statement = () => {
 };
 async function updateOp(op, patch) {
   try { await patchOp(op, patch); }
-  catch(err) { const el = $("#s_err") || $("#l_err"); if (el) el.textContent = "ما انحفظ التعديل: " + (err.message || err.code); }
+  catch(err) { const el = $("#s_err") || $("#l_err"); if (el) el.textContent = "تعذّر حفظ التعديل: " + (err.message || err.code); }
 }
 async function downloadCsv(acc, cur, pre, rows, sumD, sumC, fin) {
   const q = v => '"' + String(v ?? "").replace(/"/g,'""') + '"';
@@ -589,7 +603,7 @@ let cancelling = null;
 function openCancel(op) {
   cancelling = op;
   $("#cancelTitle").textContent = `إلغاء العملية #${op.no}`;
-  $("#cancelInfo").textContent = (op.entries[0]?.desc || "") + " · ينعمل قيد عكسي لكل سطر، والعملية بتضل بالسجل.";
+  $("#cancelInfo").textContent = (op.entries[0]?.desc || "") + " · سيُسجَّل قيد عكسي لكل سطر، وتبقى العملية محفوظة في السجل.";
   const hasFee = op.entries.some(e => e.fee);
   $("#refundWrap").hidden = !hasFee;
   $("#refundFee").checked = false;
@@ -608,7 +622,7 @@ $("#cancelGo").onclick = async () => {
   try {
     await patchOp(op, {status:"cancelled", feeRefunded:refund, cancelReason:reason, cancelledAt:Date.now(), entries:[...op.entries, ...rev]});
     $("#cancelDlg").close();
-  } catch(err) { $("#cancelErr").textContent = "ما انلغت: " + (err.message || err.code); }
+  } catch(err) { $("#cancelErr").textContent = "تعذّر الإلغاء: " + (err.message || err.code); }
   finally { btn.disabled = false; }
 };
 
@@ -651,19 +665,19 @@ views.accounts = () => {
   </form>
   <div class="card"><div class="scroll"><table><thead><tr><th>الاسم</th><th>الدولة</th><th>النوع</th><th></th></tr></thead><tbody>
   ${accounts.slice().sort((a,b)=>a.name.localeCompare(b.name,"ar")).map(a => `<tr><td>${esc(a.name)}</td><td>${esc(a.country)}</td><td>${{person:"فرد",company:"شركة",branch:"فرع"}[a.kind]||""}</td>
-    <td>${used.has(a.id)?`<span class="hint">عليه حركات</span>`:`<button type="button" class="d" data-del="${esc(a.id)}" ${readOnly?"disabled":""}>حذف</button>`}</td></tr>`).join("") || `<tr><td colspan="4" class="empty">لا توجد حسابات</td></tr>`}
+    <td>${used.has(a.id)?`<span class="hint">توجد عليه حركات</span>`:`<button type="button" class="d" data-del="${esc(a.id)}" ${readOnly?"disabled":""}>حذف</button>`}</td></tr>`).join("") || `<tr><td colspan="4" class="empty">لا توجد حسابات</td></tr>`}
   </tbody></table></div></div>`;
   $("#af").onsubmit = async e => {
     e.preventDefault();
     const name = $("#a_name").value.trim(), country = $("#a_country").value;
-    if (!name) { $("#a_err").textContent = "اكتب اسم الحساب"; return; }
-    if (accounts.some(a => a.name === name && a.country === country)) { $("#a_err").textContent = "هالحساب موجود"; return; }
+    if (!name) { $("#a_err").textContent = "أدخل اسم الحساب"; return; }
+    if (accounts.some(a => a.name === name && a.country === country)) { $("#a_err").textContent = "هذا الحساب موجود مسبقاً"; return; }
     try { must(await sb.from("accounts").insert({name, country, kind:$("#a_kind").value})); await loadAll(); $("#a_name").value = ""; $("#a_err").textContent = ""; }
-    catch(err) { $("#a_err").textContent = "ما انحفظ: " + (err.message || err.code); }
+    catch(err) { $("#a_err").textContent = "تعذّر الحفظ: " + (err.message || err.code); }
   };
   document.querySelectorAll("[data-del]").forEach(b => b.onclick = async () => {
-    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "متأكد؟ اضغط مرة ثانية"; return; }
-    try { must(await sb.from("accounts").delete().eq("id", b.dataset.del)); await loadAll(); } catch(err) { $("#a_err").textContent = "ما انحذف: " + (err.message || err.code); }
+    if (b.dataset.confirm !== "1") { b.dataset.confirm = "1"; b.textContent = "هل أنت متأكد؟ اضغط مرة أخرى"; return; }
+    try { must(await sb.from("accounts").delete().eq("id", b.dataset.del)); await loadAll(); } catch(err) { $("#a_err").textContent = "تعذّر الحذف: " + (err.message || err.code); }
   });
 };
 
@@ -673,12 +687,12 @@ views.rates = () => {
   $("#app").innerHTML = `${roGuard()}<h1>أسعار اليوم والإعدادات</h1>
   <form class="card" id="rf" novalidate>
     <h2>أسعار اليوم (مقابل الدولار)</h2>
-    <p class="hint">اكتب كم يساوي 1 دولار بكل عملة. البرنامج بيحسب باقي الأزواج (مثلاً درهم → جنيه) من خلال الدولار، وبيكتب السعر تلقائياً بالحوالة وإنت بتعدّله إذا بدك. ${s.ratesUpdated?"آخر تحديث: "+esc(new Date(s.ratesUpdated).toLocaleString("ar-EG")):""}</p>
+    <p class="hint">أدخل قيمة الدولار الواحد بكل عملة. يحسب البرنامج باقي الأزواج (مثلاً درهم → جنيه) عن طريق الدولار، ويُدرج السعر تلقائياً في الحوالة مع إمكانية تعديله. ${s.ratesUpdated?"آخر تحديث: "+esc(new Date(s.ratesUpdated).toLocaleString("ar-EG")):""}</p>
     <div class="grid">${s.currencies.filter(c=>c!=="USD").map(c => `<label>1 USD = ؟ ${esc(c)}<input inputmode="decimal" data-rate="${esc(c)}" value="${esc(s.usdRates[c]??"")}"></label>`).join("")}</div>
     <h2>العمولة</h2>
-    <label>طريقة احتساب العمولة<select id="r_fee"><option value="top"${s.feeMode==="top"?" selected":""}>تنضاف فوق المبلغ وتنخصم من المرسل</option><option value="deduct"${s.feeMode==="deduct"?" selected":""}>تنخصم من المبلغ فيوصل للمستلم أقل</option></select></label>
+    <label>طريقة احتساب العمولة<select id="r_fee"><option value="top"${s.feeMode==="top"?" selected":""}>تُضاف إلى المبلغ وتُخصم من المرسل</option><option value="deduct"${s.feeMode==="deduct"?" selected":""}>تُخصم من المبلغ فيصل إلى المستلم مبلغ أقل</option></select></label>
     <h2>القطع</h2>
-    <label class="check"><input type="checkbox" id="r_cut"${s.cutBothLegs?" checked":""}> القطع ينزل كحركتين: العملة الأولى والعملة الثانية بنفس الحساب</label>
+    <label class="check"><input type="checkbox" id="r_cut"${s.cutBothLegs?" checked":""}> يُسجَّل القطع كحركتين: العملة الأولى والعملة الثانية في الحساب نفسه</label>
     <h2>العملات والدول</h2>
     <div class="grid">
       <label>العملات (افصل بفاصلة)<input id="r_curs" value="${esc(s.currencies.join(", "))}"></label>
@@ -696,14 +710,26 @@ views.rates = () => {
     document.querySelectorAll("[data-rate]").forEach(i => { const v = +i.value; if (i.value.trim() === "") return; if (v > 0) usdRates[i.dataset.rate] = v; else bad.push(i.dataset.rate); });
     for (const c of currencies) if (usdRates[c] === undefined && s.usdRates[c]) usdRates[c] = s.usdRates[c];
     if (bad.length) { $("#r_err").textContent = "سعر غير صالح: " + bad.join("، "); return; }
-    if (!countries.length) { $("#r_err").textContent = "اكتب دولة وحدة على الأقل"; return; }
+    if (!countries.length) { $("#r_err").textContent = "أدخل دولة واحدة على الأقل"; return; }
     const next = {currencies, countries, usdRates, feeMode:$("#r_fee").value, cutBothLegs:$("#r_cut").checked, ratesUpdated:Date.now()};
-    try { must(await sb.from("settings").upsert({owner:me.id, data:next})); await loadAll(); $("#r_ok").textContent = "انحفظ"; }
-    catch(err) { $("#r_err").textContent = "ما انحفظ: " + (err.message || err.code); }
+    try { must(await sb.from("settings").upsert({owner:me.id, data:next})); await loadAll(); $("#r_ok").textContent = "تم الحفظ"; }
+    catch(err) { $("#r_err").textContent = "تعذّر الحفظ: " + (err.message || err.code); }
   };
 };
 
 // ---------- login ----------
+const AUTH_MSG = {
+  invalid_credentials:"البريد الإلكتروني أو كلمة السر غير صحيحة.",
+  email_not_confirmed:"لم يتم تأكيد البريد الإلكتروني بعد. افتح رسالة التأكيد ثم حاول مجدداً.",
+  user_already_exists:"هذا البريد مسجّل مسبقاً. استخدم زر «دخول».",
+  weak_password:"كلمة السر ضعيفة. استخدم 8 أحرف على الأقل تجمع بين الأحرف والأرقام.",
+  over_email_send_rate_limit:"تم تجاوز عدد رسائل البريد المسموح بها مؤقتاً. حاول بعد ساعة.",
+  over_request_rate_limit:"محاولات كثيرة خلال وقت قصير. انتظر دقيقة ثم حاول مجدداً.",
+  signup_disabled:"إنشاء حسابات جديدة غير مفعّل.",
+  email_address_invalid:"البريد الإلكتروني غير صالح.",
+  unexpected_failure:"حدث خطأ في خادم تسجيل الدخول. يرجى المحاولة لاحقاً."
+};
+const authMsg = e => AUTH_MSG[e.code] || ("تعذّر تسجيل الدخول (" + (e.code || e.message || "خطأ غير معروف") + ")");
 function showLogin(msg="") {
   $("#nav").hidden = true; $("#logout").hidden = true; setStatus("");
   $("#app").innerHTML = `<form class="card" id="lf" style="max-width:380px;margin:40px auto;width:100%" novalidate>
@@ -711,14 +737,17 @@ function showLogin(msg="") {
     <label>البريد الإلكتروني<input type="email" id="l_email" autocomplete="username" dir="ltr" required></label>
     <label>كلمة السر<input type="password" id="l_pass" autocomplete="current-password" dir="ltr" minlength="8" required></label>
     <div class="err" id="l_msg" role="alert">${esc(msg)}</div>
-    <div class="btns"><button class="p" type="submit">دخول</button><button type="button" id="l_new">أول مرة؟ أنشئ حساب</button></div>
+    <div class="btns"><button class="p" type="submit">دخول</button><button type="button" id="l_new">إنشاء حساب جديد</button></div>
   </form>`;
   const go = async signup => {
     const email = $("#l_email").value.trim(), password = $("#l_pass").value;
-    if (!email || password.length < 8) { $("#l_msg").textContent = "اكتب البريد وكلمة سر 8 أحرف على الأقل"; return; }
-    const {error} = signup ? await sb.auth.signUp({email, password, options:{emailRedirectTo:location.origin + location.pathname}}) : await sb.auth.signInWithPassword({email, password});
-    if (error) { $("#l_msg").textContent = "ما زبط: " + error.message; return; }
-    if (signup) $("#l_msg").textContent = "انعمل الحساب. إذا وصلك إيميل تأكيد، افتحه وبعدين سجّل دخول.";
+    if (!email || password.length < 8) { $("#l_msg").textContent = "أدخل البريد الإلكتروني وكلمة سر من 8 أحرف على الأقل."; return; }
+    $("#l_msg").textContent = "";
+    const {data, error} = signup
+      ? await sb.auth.signUp({email, password, options:{emailRedirectTo:location.origin + location.pathname}})
+      : await sb.auth.signInWithPassword({email, password});
+    if (error) { $("#l_msg").textContent = authMsg(error); return; }
+    if (signup && !data.session) $("#l_msg").textContent = "تم إنشاء الحساب. افتح رسالة التأكيد في بريدك الإلكتروني، ثم سجّل الدخول.";
   };
   $("#lf").onsubmit = e => { e.preventDefault(); go(false); };
   $("#l_new").onclick = () => go(true);
@@ -727,12 +756,12 @@ async function onSession(session) {
   me = session?.user || null;
   if (!me) { loaded = {acc:false, ops:false, set:false}; showLogin(); return; }
   $("#nav").hidden = false; $("#logout").hidden = false;
-  try { await loadAll(); } catch(e) { setStatus("خطأ بالاتصال: " + (e.message || "")); }
+  try { await loadAll(); } catch(e) { setStatus("خطأ في الاتصال: " + (e.message || "")); }
 }
 
 // ---------- boot ----------
 (() => {
-  if (!window.supabase || !window.SARRAFA_CONFIG?.url) { $("#app").innerHTML = `<div class="banner">ما قدرنا نوصل للخادم. تأكد من الإنترنت وجرّب مرة ثانية.</div>`; return; }
+  if (!window.supabase || !window.SARRAFA_CONFIG?.url) { $("#app").innerHTML = `<div class="banner">تعذّر الاتصال بالخادم. تحقق من الاتصال بالإنترنت وحاول مرة أخرى.</div>`; return; }
   sb = window.supabase.createClient(SARRAFA_CONFIG.url, SARRAFA_CONFIG.key);
   $("#logout").onclick = () => sb.auth.signOut();
   sb.auth.onAuthStateChange((ev, session) => { if (ev !== "TOKEN_REFRESHED") setTimeout(() => onSession(session)); });
