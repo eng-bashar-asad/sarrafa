@@ -82,7 +82,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:start;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-weight:600;color:var(--muted);font-size:12px;white-space:nowrap}
 td.n,th.n{text-align:end;white-space:nowrap}
-.lana{color:var(--bad)} .alayna{color:var(--ok)}
+.lana{color:var(--ok)} .alayna{color:var(--bad)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:99px;background:var(--bg);cursor:pointer;color:var(--ink)}
 .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -373,7 +373,7 @@ views.balances = () => {
     </button>`; };
   $("#app").innerHTML = `${needAccounts()}
   <h1>الأرصدة</h1>
-  <div class="balbox"><small class="hint">مجموع الأرصدة محوّلاً إلى الدولار بأسعار وقت كل عملية</small><strong class="num ${sideCls(total)}">${fmt(Math.abs(total))} USD</strong><span class="pill ${total<0?"bad":"ok"}">${total<0?"لنا":total>0?"علينا":"متوازن"}</span></div>
+  <div class="balbox"><small class="hint">مجموع الأرصدة محوّلاً إلى الدولار بأسعار وقت كل عملية</small><strong class="num ${sideCls(total)}">${fmt(Math.abs(total))} USD</strong><span class="pill ${total<0?"ok":total>0?"bad":""}">${total<0?"لنا":total>0?"علينا":"متوازن"}</span></div>
   <p class="hint">لكل شخص: الرصيد الموحّد بالدولار، وتحته رصيد كل عملة. الرقم بين قوسين = لنا. اضغط على العملة لفتح كشفها.</p>
   <div class="plist">${list.map(card).join("")}</div>`;
   document.querySelectorAll(".pcard").forEach(btn => btn.onclick = e => {
