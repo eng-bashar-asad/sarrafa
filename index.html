@@ -11,6 +11,7 @@
 <meta name="apple-mobile-web-app-title" content="صرافة">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
+<script>try{const t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <script src="vendor/supabase.js"></script>
 <script src="config.js"></script>
 <style>:root{box-sizing:border-box}body{margin:0;font:14px sans-serif}[hidden]{display:none!important}</style>
@@ -26,8 +27,17 @@
   --f-body:"Times New Roman",Times,serif;
   --f-display:var(--f-body);
   --f-num:var(--f-body);
+  --hl:rgba(255,255,255,.9); --sh:rgba(28,40,51,.18);
   color-scheme:light;
 }
+/* Optional themes, chosen per device in settings. Default above = light blue + silver + matte white. */
+:root[data-theme="navy"]{--bg:#0f1b2b;--surface:#16263a;--ink:#e8edf3;--muted:#9fb0c2;--line:#2b3e55;--accent:#3b8fd6;--accent-soft:#1d3550;--brass:#c9a961;--brass-soft:#2a3442;
+  --top:#13233a;--top-ink:#ecdcb0;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#1b2f47;--g2:#1f2a37;--g3:#183240;--g4:#232840;--sel:#4a3f10;
+  --hl:rgba(255,255,255,.07);--sh:rgba(0,0,0,.55);color-scheme:dark}
+:root[data-theme="sand"]{--bg:#f3eee4;--surface:#faf7f0;--ink:#2e2618;--muted:#6f6450;--line:#d9cfbd;--accent:#8a5a2b;--accent-soft:#efe2cf;--brass:#8a5a2b;--brass-soft:#ece3d3;
+  --top:#e8dcc5;--top-ink:#4a3418;--g1:#f1e7d6;--g2:#efeae0;--g3:#eef0e0;--g4:#f2e6e0;--sh:rgba(60,40,15,.18)}
+:root[data-theme="emerald"]{--bg:#edf2ef;--surface:#f7faf8;--ink:#18302a;--muted:#58706a;--line:#c8d6d0;--accent:#1f6f8b;--accent-soft:#d7eaf0;--brass:#1f6f8b;--brass-soft:#e1ebe7;
+  --top:#d3eadf;--top-ink:#134535;--g1:#e0f0e8;--g2:#e8ecea;--g3:#dcefee;--g4:#e5e9f2;--sh:rgba(15,50,40,.18)}
 *,*::before,*::after{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--top)}
@@ -41,14 +51,16 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .homebtn{background:var(--surface);color:var(--top-ink);font-weight:600;padding:6px 12px;border-radius:99px}
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 @media (min-width:700px){.tiles{grid-template-columns:repeat(4,1fr)}}
-.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:120px;padding:16px;text-align:center;
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;min-height:130px;padding:16px;text-align:center;
   background:linear-gradient(160deg,var(--surface),var(--bg));border:1px solid var(--line);border-radius:14px;color:var(--ink);text-decoration:none;font-weight:600;
-  box-shadow:-4px -4px 10px rgba(255,255,255,.9),5px 6px 12px rgba(28,40,51,.16),inset 0 1px 0 #fff;
+  box-shadow:-4px -4px 10px var(--hl),6px 8px 16px var(--sh),inset 0 1px 0 var(--hl);
   transition:transform .12s ease,box-shadow .12s ease;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
 .tile:active,.tile.pressed{transform:translateY(2px) scale(.97);
-  box-shadow:inset 4px 4px 9px rgba(28,40,51,.18),inset -4px -4px 9px rgba(255,255,255,.85)}
+  box-shadow:inset 4px 4px 9px var(--sh),inset -4px -4px 9px var(--hl)}
 .tile .ic{width:48px;height:48px;margin:0;transition:transform .12s ease;
-  filter:drop-shadow(0 1px 0 rgba(255,255,255,.8)) drop-shadow(1px 2px 1.5px rgba(80,55,10,.35)) drop-shadow(2px 4px 4px rgba(28,40,51,.18))}
+  filter:drop-shadow(0 -1px 0 rgba(255,240,200,.7)) drop-shadow(0 1.5px 0 #6b4a12) drop-shadow(0 3px 0 #59400f) drop-shadow(2px 7px 6px rgba(0,0,0,.35));
+  -webkit-box-reflect:below 4px linear-gradient(transparent 55%,rgba(255,255,255,.28))}
+.ic .gloss{fill:url(#gloss)}
 .tile:active .ic,.tile.pressed .ic{transform:translateY(1px) scale(.94);filter:drop-shadow(0 1px 0 rgba(255,255,255,.6)) drop-shadow(0 1px 1px rgba(80,55,10,.3))}
 .plist{display:flex;flex-direction:column;gap:10px}
 .pcard{display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:start;padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);width:100%}
@@ -117,9 +129,12 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 <div>
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
-    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#9a7430"/><stop offset=".35" stop-color="#c9a961"/><stop offset=".6" stop-color="#b8954a"/>
-      <stop offset="1" stop-color="#8c6a2b"/>
+    <linearGradient id="gold" x1="0" y1="0" x2=".6" y2="1">
+      <stop offset="0" stop-color="#f3dc9a"/><stop offset=".3" stop-color="#d4af5a"/><stop offset=".55" stop-color="#a87c2c"/>
+      <stop offset=".75" stop-color="#c99a45"/><stop offset="1" stop-color="#7a5418"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".42" stop-color="#fff" stop-opacity=".18"/><stop offset=".46" stop-color="#fff" stop-opacity="0"/>
     </linearGradient>
   </defs>
   <symbol id="i-bal" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 7a3 3 0 0 1 3-3h11a1 1 0 0 1 0 2H6a1 1 0 0 0 0 2h13a2 2 0 0 1 2 2v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7zm14 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></symbol>
@@ -355,7 +370,20 @@ function route(fromData) {
   current = name;
   views[name]();
 }
-window.addEventListener("hashchange", () => route(false));
+// Each screen is its own history entry, numbered by depth, so the phone's back goes exactly one step back.
+let navDepth = history.state?.d ?? 0, goingHome = false;
+if (history.state?.d === undefined) history.replaceState({d:0}, "");
+window.addEventListener("hashchange", () => {
+  if (history.state?.d === undefined) history.replaceState({d: navDepth + 1}, "");
+  navDepth = history.state.d;
+  if (goingHome && location.hash !== "#home" && location.hash !== "") { goingHome = false; location.replace("#home"); return; }
+  goingHome = false; route(false);
+});
+// Back closes an open dialog instead of leaving the screen.
+const _showModal = HTMLDialogElement.prototype.showModal;
+HTMLDialogElement.prototype.showModal = function () { _showModal.call(this); history.pushState({d: navDepth, dlg:1}, ""); };
+document.addEventListener("close", () => { if (history.state?.dlg) history.back(); }, true);
+window.addEventListener("popstate", () => { if (!history.state?.dlg) document.querySelectorAll("dialog[open]").forEach(d => d.close()); });
 const roGuard = () => readOnly ? `<div class="banner">لا يمكن التعديل من هذا الحساب، العرض فقط.</div>` : "";
 const needAccounts = () => accounts.length ? "" : `<div class="banner">لا توجد حسابات بعد. <a href="#accounts">أضف أول حساب</a> (مثلاً «دبي، باسم بشار»).</div>`;
 
@@ -385,7 +413,7 @@ views.balances = () => {
 // ----- home -----
 const SECTIONS = [["balances","bal","الأرصدة"],["transfer","tr","حوالة جديدة"],["move","cash","حركة نقدية"],["cut","ex","قطع / تحويل عملة"],["statement","doc","كشف حساب"],["log","log","سجل العمليات"],["accounts","usr","الحسابات"],["rates","pct","أسعار اليوم والإعدادات"]];
 views.home = () => {
-  $("#app").innerHTML = `${needAccounts()}<div class="tiles">${SECTIONS.map(([h,i,t]) => `<a class="tile" href="#${h}"><svg class="ic" aria-hidden="true"><use href="#i-${i}"/></svg><span>${t}</span></a>`).join("")}</div>`;
+  $("#app").innerHTML = `${needAccounts()}<div class="tiles">${SECTIONS.map(([h,i,t]) => `<a class="tile" href="#${h}"><svg class="ic" aria-hidden="true"><use href="#i-${i}"/><use class="gloss" href="#i-${i}"/></svg><span>${t}</span></a>`).join("")}</div>`;
   // Show the pressed-in state for a moment before opening, so a quick tap is visible.
   document.querySelectorAll(".tile").forEach(t => t.onclick = e => { e.preventDefault(); t.classList.add("pressed"); setTimeout(() => { location.hash = t.getAttribute("href"); }, 140); });
 };
@@ -834,6 +862,12 @@ views.accounts = () => {
 };
 
 // ----- rates & settings -----
+const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"]];
+document.addEventListener("click", e => { const b = e.target.closest("[data-theme-pick]"); if (!b) return;
+  const t = b.dataset.themePick; if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
+  try { t ? localStorage.setItem("theme", t) : localStorage.removeItem("theme"); } catch {}
+  document.querySelector('meta[name=theme-color]').content = getComputedStyle(document.documentElement).getPropertyValue("--top").trim();
+  document.querySelectorAll("[data-theme-pick]").forEach(x => x.classList.toggle("p", x === b)); });
 views.rates = () => {
   const s = settings;
   $("#app").innerHTML = `${roGuard()}<h1>أسعار اليوم والإعدادات</h1>
@@ -854,6 +888,11 @@ views.rates = () => {
     <div class="err" id="r_err" role="alert"></div>
     <div class="btns"><button class="p" type="submit" ${readOnly?"disabled":""}>حفظ</button><span class="okmsg" id="r_ok"></span></div>
   </form>
+  <div class="card">
+    <h2>مظهر التطبيق</h2>
+    <p class="hint">يُطبَّق فوراً على هذا الجهاز.</p>
+    <div class="btns">${THEMES.map(([k,t]) => `<button type="button" class="theme${(document.documentElement.dataset.theme||"")===k?" p":""}" data-theme-pick="${k}">${t}</button>`).join("")}</div>
+  </div>
   <div class="card">
     <h2>الدخول بالبصمة أو بصمة الوجه</h2>
     <p class="hint">عند التفعيل يطلب التطبيق البصمة أو Face ID عند كل فتح، وبعد غيابه عن الشاشة أكثر من 5 دقائق. يُفعَّل على هذا الجهاز فقط.</p>
@@ -976,7 +1015,8 @@ async function onSession(session) {
   if (!window.supabase || !window.SARRAFA_CONFIG?.url) { $("#app").innerHTML = `<div class="banner">تعذّر الاتصال بالخادم. تحقق من الاتصال بالإنترنت وحاول مرة أخرى.</div>`; return; }
   sb = window.supabase.createClient(SARRAFA_CONFIG.url, SARRAFA_CONFIG.key);
   $("#logout").onclick = () => sb.auth.signOut();
-  $("#homeBtn").onclick = () => { location.hash = "#home"; };
+  // Home: step back through history to the start instead of piling new entries on top.
+  $("#homeBtn").onclick = () => { if (navDepth > 0) { goingHome = true; history.go(-navDepth); } else location.replace("#home"); };
   sb.auth.onAuthStateChange((ev, session) => { if (ev !== "TOKEN_REFRESHED") setTimeout(() => onSession(session)); });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) { hiddenAt = Date.now(); return; }
