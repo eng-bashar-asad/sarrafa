@@ -706,7 +706,14 @@ views.rates = () => {
     </div>
     <div class="err" id="r_err" role="alert"></div>
     <div class="btns"><button class="p" type="submit" ${readOnly?"disabled":""}>حفظ</button><span class="okmsg" id="r_ok"></span></div>
-  </form>`;
+  </form>
+  <div class="card">
+    <h2>الدخول بالبصمة أو بصمة الوجه</h2>
+    <p class="hint">عند التفعيل يطلب التطبيق البصمة أو Face ID عند كل فتح، وبعد غيابه عن الشاشة أكثر من 5 دقائق. يُفعَّل على هذا الجهاز فقط.</p>
+    <div class="btns"><button type="button" id="bio_btn" disabled>جارٍ التحقق من دعم الجهاز…</button></div>
+    <div class="err" id="bio_err" role="alert"></div>
+  </div>`;
+  bioSettings();
   $("#rf").onsubmit = async e => {
     e.preventDefault(); $("#r_err").textContent = ""; $("#r_ok").textContent = "";
     const currencies = [...new Set($("#r_curs").value.split(/[,،]/).map(x => x.trim().toUpperCase()).filter(x => /^[A-Z]{3}$/.test(x)))];
@@ -753,14 +760,65 @@ function showLogin(msg="") {
       ? await sb.auth.signUp({email, password, options:{emailRedirectTo:location.origin + location.pathname}})
       : await sb.auth.signInWithPassword({email, password});
     if (error) { $("#l_msg").textContent = authMsg(error); return; }
+    unlocked = true; // just proved the password
+
     if (signup && !data.session) $("#l_msg").textContent = "تم إنشاء الحساب. افتح رسالة التأكيد في بريدك الإلكتروني، ثم سجّل الدخول.";
   };
   $("#lf").onsubmit = e => { e.preventDefault(); go(false); };
   $("#l_new").onclick = () => go(true);
 }
+// ---------- biometric lock (WebAuthn platform authenticator) ----------
+// ponytail: this is a device-side lock in front of the saved login, not a server login; the server still requires the Supabase session.
+// Upgrade path: Supabase passkey/MFA sign-in once available on the project.
+const BIO_KEY = "bioCredId", LOCK_AFTER_MS = 5 * 60 * 1000;
+let unlocked = false, hiddenAt = 0, lastSession = null;
+const bioId = () => { try { return localStorage.getItem(BIO_KEY); } catch(e) { return null; } };
+const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
+const unb64u = t => Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")), c => c.charCodeAt(0));
+const bioSupported = async () => !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false));
+async function bioRegister() {
+  const c = await navigator.credentials.create({publicKey:{
+    challenge:crypto.getRandomValues(new Uint8Array(32)), rp:{name:"صرافة"},
+    user:{id:new TextEncoder().encode(me.id), name:me.email || "user", displayName:me.email || "user"},
+    pubKeyCredParams:[{type:"public-key", alg:-7}, {type:"public-key", alg:-257}],
+    authenticatorSelection:{authenticatorAttachment:"platform", userVerification:"required", residentKey:"discouraged"}, timeout:60000}});
+  localStorage.setItem(BIO_KEY, b64u(c.rawId));
+}
+const bioVerify = () => navigator.credentials.get({publicKey:{
+  challenge:crypto.getRandomValues(new Uint8Array(32)), allowCredentials:[{type:"public-key", id:unb64u(bioId())}],
+  userVerification:"required", timeout:60000}});
+async function bioSettings() {
+  const btn = $("#bio_btn"), err = $("#bio_err");
+  if (!(await bioSupported())) { btn.textContent = "هذا الجهاز أو المتصفح لا يدعم البصمة"; return; }
+  const draw = () => { btn.disabled = false; btn.className = bioId() ? "d" : "p"; btn.textContent = bioId() ? "إلغاء الدخول بالبصمة" : "تفعيل الدخول بالبصمة / Face ID"; };
+  draw();
+  btn.onclick = async () => {
+    err.textContent = "";
+    if (bioId()) { try { localStorage.removeItem(BIO_KEY); } catch(e) {} draw(); return; }
+    try { await bioRegister(); draw(); } catch(e) { err.textContent = e.name === "NotAllowedError" ? "أُلغيت العملية أو انتهت مهلتها." : "تعذّر التفعيل: " + (e.message || e.name); }
+  };
+}
+function showLock(msg = "") {
+  loaded = {acc:false, ops:false, set:false}; accounts = []; ops = []; // nothing stays readable behind the lock
+  $("#nav").hidden = true; $("#logout").hidden = true; setStatus("");
+  $("#app").innerHTML = `<div class="card" style="max-width:380px;margin:40px auto;width:100%;align-items:center;text-align:center">
+    <svg class="ic coin" style="width:64px;height:64px" aria-hidden="true"><use href="#i-coin"/></svg>
+    <h1>التطبيق مقفل</h1>
+    <button class="p" type="button" id="bio_go">فتح بالبصمة / Face ID</button>
+    <button type="button" id="bio_pw">الدخول بكلمة السر بدلاً من ذلك</button>
+    <div class="err" id="bio_msg" role="alert">${esc(msg)}</div></div>`;
+  $("#bio_go").onclick = async () => {
+    try { await bioVerify(); unlocked = true; onSession(lastSession); }
+    catch(e) { $("#bio_msg").textContent = e.name === "NotAllowedError" ? "لم يتم التحقق. حاول مرة أخرى." : "تعذّر التحقق: " + (e.message || e.name); }
+  };
+  $("#bio_pw").onclick = () => sb.auth.signOut();
+}
+
 async function onSession(session) {
+  lastSession = session;
   me = session?.user || null;
-  if (!me) { loaded = {acc:false, ops:false, set:false}; showLogin(); return; }
+  if (!me) { loaded = {acc:false, ops:false, set:false}; unlocked = false; showLogin(); return; }
+  if (bioId() && !unlocked) { showLock(); return; }
   $("#nav").hidden = false; $("#logout").hidden = false;
   try { await loadAll(); } catch(e) { setStatus("خطأ في الاتصال: " + (e.message || "")); }
 }
@@ -771,7 +829,11 @@ async function onSession(session) {
   sb = window.supabase.createClient(SARRAFA_CONFIG.url, SARRAFA_CONFIG.key);
   $("#logout").onclick = () => sb.auth.signOut();
   sb.auth.onAuthStateChange((ev, session) => { if (ev !== "TOKEN_REFRESHED") setTimeout(() => onSession(session)); });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden && me) loadAll().catch(() => {}); });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) { hiddenAt = Date.now(); return; }
+    if (me && bioId() && unlocked && Date.now() - hiddenAt > LOCK_AFTER_MS) { unlocked = false; showLock(); return; }
+    if (me && (unlocked || !bioId())) loadAll().catch(() => {});
+  });
   if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 })();
 </script>

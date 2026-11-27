@@ -1,5 +1,5 @@
 // Network first, cache as offline fallback for the app shell only. Data always comes live from Supabase.
-const CACHE = "sarrafa-v6";
+const CACHE = "sarrafa-v7";
 self.addEventListener("install", e => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(clients.claim()));
 self.addEventListener("fetch", e => {
