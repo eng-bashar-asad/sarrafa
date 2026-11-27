@@ -138,6 +138,14 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 </header>
 <main id="app"><div class="empty">جارِ تحميل البيانات…</div></main>
 
+<dialog id="reasonDlg">
+  <form method="dialog" id="reasonForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
+    <h2>إضافة سبب تحويل</h2>
+    <label>السبب<input id="nr_name" maxlength="60" placeholder="مثلاً: قسط سيارة"></label>
+    <div class="err" id="nr_err" role="alert"></div>
+    <div class="btns"><button type="submit" class="p" id="nr_go">إضافة</button><button type="button" id="nr_close">رجوع</button></div>
+  </form>
+</dialog>
 <dialog id="accDlg">
   <form method="dialog" id="accForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
     <h2>إضافة حساب جديد</h2>
@@ -166,6 +174,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 const DEFAULT_SETTINGS = {
   currencies: ["USD","AED","EGP","EUR","SYP"],
   countries: ["الإمارات","مصر","سوريا","لبنان","تركيا","ألمانيا"],
+  reasons: ["دفعة ثمن منزل","مصاريف عائلية","تجارة","تسديد دين","رواتب"],
   // 1 USD = x. Cross rates are derived through USD.
   usdRates: {USD:1, AED:3.6725, EGP:48.5, EUR:0.92, SYP:138.5},
   feeMode: "deduct",     // "deduct" (default, owner's rule): fee taken out of the amount sent | "top": fee charged on top to sender
@@ -210,6 +219,19 @@ const KIND_LBL = {person:"فرد", company:"شركة", branch:"فرع"};
 const NEW_ACC = "__new";
 const accOpts = (sel, blank="اختر حساباً", canAdd=true) => `<option value="">${blank}</option>` + accounts.slice().sort((a,b)=>a.name.localeCompare(b.name,"ar")).map(a => `<option value="${esc(a.id)}"${a.id===sel?" selected":""}>${esc(a.name)} · ${esc(a.country)}${KIND_LBL[a.kind] ? " · " + KIND_LBL[a.kind] : ""}</option>`).join("")
   + (canAdd && !readOnly ? `<option value="${NEW_ACC}">＋ إضافة حساب جديد…</option>` : "");
+// ----- transfer reasons (saved list in settings, "add new" inside the picker) -----
+const NEW_REASON = "__newreason";
+const reasonOpts = (sel = "") => `<option value="">بدون سبب</option>` + (settings.reasons || []).map(r => `<option${r===sel?" selected":""}>${esc(r)}</option>`).join("")
+  + (readOnly ? "" : `<option value="${NEW_REASON}">＋ إضافة سبب جديد…</option>`);
+const withReason = k => { const r = $("#" + k + "_reason").value, n = $("#" + k + "_note").value.trim(); return [r && "السبب: " + r, n].filter(Boolean).join(" · "); };
+let reasonTarget = null;
+document.addEventListener("change", e => {
+  const sel = e.target;
+  if (!(sel instanceof HTMLSelectElement) || sel.value !== NEW_REASON) return;
+  e.stopImmediatePropagation(); sel.value = ""; reasonTarget = sel;
+  $("#nr_name").value = ""; $("#nr_err").textContent = ""; $("#reasonDlg").showModal(); $("#nr_name").focus();
+}, true);
+
 // Any account picker: choosing "add new account" opens the dialog, then selects the new account.
 let accTarget = null;
 document.addEventListener("change", e => {
@@ -373,6 +395,7 @@ views.transfer = () => {
       <label>إلى حساب<select id="t_to">${accOpts("")}</select></label>
       <label>نسبة العمولة %<input id="t_fee" inputmode="decimal" placeholder="0"></label>
     </div>
+    <label>سبب التحويل<select id="t_reason">${reasonOpts()}</select></label>
     <label>ملاحظات (وصف أو علامة مميزة)<textarea id="t_note" maxlength="300" placeholder="مثلاً: دفعة ثمن منزل، سُلّمت في موناكو"></textarea></label>
     <div class="chips" id="t_quick"></div>
     <div class="summary" id="t_sum"></div>
@@ -421,7 +444,7 @@ views.transfer = () => {
     if (!(fee >= 0 && fee < 100)) errs.push("نسبة العمولة بين 0 و 100");
     if (!f("t_date").value) errs.push("اختر التاريخ");
     if (errs.length) { f("t_err").textContent = errs.join(" · "); return; }
-    const c = compute(amt, fee, rate), note = f("t_note").value.trim();
+    const c = compute(amt, fee, rate), note = withReason("t");
     const desc = `حوالة ${fmt(amt)} ${cur}` + (cur!==tocur ? ` على سعر ${rateTxt} = ${fmt(c.toAmt)} ${tocur}` : "") + ` إلى ${accName(to)}`;
     const entries = [
       {acc:from, cur, debit:c.sendAmt, credit:0, kind:"حوالة", desc: desc + (note?" · "+note:""), recon:""},
@@ -429,10 +452,10 @@ views.transfer = () => {
     ];
     if (c.fee > 0) entries.splice(1, 0, {acc:from, cur, debit:c.fee, credit:0, kind:"عمولة", fee:true, desc:`عمولة ${fee}% ${desc}`, recon:""});
     stampUsd(entries, cur === tocur ? {[cur]:usdRateOf(cur)} : pairUsdRates(cur, tocur, rate));
-    const op = {type:"transfer", date:f("t_date").value, createdAt:Date.now(), status:"active", note, country:f("t_country").value,
+    const op = {reason:$("#t_reason").value, type:"transfer", date:f("t_date").value, createdAt:Date.now(), status:"active", note, country:f("t_country").value,
       amount:amt, cur, tocur, rate, rateTxt, feePct:fee, feeAmt:c.fee, feeMode:settings.feeMode, from, to, entries};
     const btn = f("tf").querySelector("button[type=submit]"); btn.disabled = true;
-    try { await saveOp(op); f("t_ok").textContent = `حُفظت الحوالة #${op.no}`; f("t_amt").value = ""; f("t_note").value = ""; calc(); }
+    try { await saveOp(op); f("t_ok").textContent = `حُفظت الحوالة #${op.no}`; f("t_amt").value = ""; f("t_note").value = ""; f("t_reason").value = ""; calc(); }
     catch(err) { f("t_err").textContent = "تعذّر الحفظ: " + (err.message || err.code || "خطأ"); }
     finally { btn.disabled = readOnly; }
   };
@@ -459,6 +482,7 @@ views.move = () => {
       <label>الجهة<select id="m_side"><option value="credit">دائن / علينا (يزيد رصيده عندنا)</option><option value="debit">مدين / لنا (ينقص رصيده)</option></select></label>
       <label>عمولة % (اختياري)<input id="m_fee" inputmode="decimal" placeholder="0"></label>
     </div>
+    <label>سبب التحويل<select id="m_reason">${reasonOpts()}</select></label>
     <label>البيان / الملاحظات<textarea id="m_note" maxlength="300" placeholder="مثلاً: نقداً باليد، أو إيداع عن طريق زيد"></textarea></label>
     <div class="err" id="m_err" role="alert"></div>
     <div class="btns"><button class="p" type="submit" ${readOnly?"disabled":""}>حفظ الحركة</button><span class="okmsg" id="m_ok"></span></div>
@@ -473,14 +497,14 @@ views.move = () => {
     if (!(amt > 0)) errs.push("المبلغ يجب أن يكون أكبر من الصفر");
     if (!(fee >= 0 && fee < 100)) errs.push("نسبة العمولة بين 0 و 100");
     if (errs.length) { f("m_err").textContent = errs.join(" · "); return; }
-    const note = f("m_note").value.trim(), feeAmt = r5(amt * fee / 100);
+    const note = withReason("m"), feeAmt = r5(amt * fee / 100);
     const desc = `${TYPE_LBL[type]} ${fmt(amt)} ${cur}` + (note ? " · " + note : "");
     const entries = [{acc, cur, debit: sd==="debit"?amt:0, credit: sd==="credit"?amt:0, kind:TYPE_LBL[type], desc, recon:""}];
     if (feeAmt > 0) entries.push({acc, cur, debit:feeAmt, credit:0, kind:"عمولة", fee:true, desc:`عمولة ${fee}% ${desc}`, recon:""});
     stampUsd(entries, {[cur]:usdRateOf(cur)});
-    const op = {type, date:f("m_date").value || today(), createdAt:Date.now(), status:"active", note, amount:amt, cur, feePct:fee, feeAmt, from:acc, entries};
+    const op = {reason:$("#m_reason").value, type, date:f("m_date").value || today(), createdAt:Date.now(), status:"active", note, amount:amt, cur, feePct:fee, feeAmt, from:acc, entries};
     const btn = f("mf").querySelector("button[type=submit]"); btn.disabled = true;
-    try { await saveOp(op); f("m_ok").textContent = `حُفظت الحركة #${op.no}`; f("m_amt").value = ""; f("m_note").value = ""; }
+    try { await saveOp(op); f("m_ok").textContent = `حُفظت الحركة #${op.no}`; f("m_amt").value = ""; f("m_note").value = ""; f("m_reason").value = ""; }
     catch(err) { f("m_err").textContent = "تعذّر الحفظ: " + (err.message || err.code || "خطأ"); }
     finally { btn.disabled = readOnly; }
   };
@@ -501,6 +525,7 @@ views.cut = () => {
       <label>مقابل عملة<select id="c_to">${curOpts("SYP")}</select></label>
       <label><span id="c_ratelbl">السعر (قابل للتعديل)</span><input id="c_rate" inputmode="decimal"></label>
     </div>
+    <label>سبب التحويل<select id="c_reason">${reasonOpts()}</select></label>
     <label>البيان / الملاحظات<textarea id="c_note" maxlength="300"></textarea></label>
     <div class="summary" id="c_sum"></div>
     <div class="err" id="c_err" role="alert"></div>
@@ -528,14 +553,14 @@ views.cut = () => {
     if (!(rate > 0)) errs.push("السعر يجب أن يكون أكبر من الصفر");
     if (cur === to) errs.push("اختر عملتين مختلفتين");
     if (errs.length) { f("c_err").textContent = errs.join(" · "); return; }
-    const other = r5(amt * rate), note = f("c_note").value.trim();
+    const other = r5(amt * rate), note = withReason("c");
     const desc = `قطع مبلغ: ${fmt(amt)} ${cur} بسعر ${rateTxt} = ${fmt(other)} ${to}` + (note ? " · " + note : "");
     const entries = [{acc, cur, debit:0, credit:amt, kind:"قطع", desc, recon:""}];
     if (settings.cutBothLegs) entries.push({acc, cur:to, debit:other, credit:0, kind:"قطع", desc, recon:""});
     stampUsd(entries, pairUsdRates(cur, to, rate));
-    const op = {type:"cut", date:f("c_date").value || today(), createdAt:Date.now(), status:"active", note, amount:amt, cur, tocur:to, rate, rateTxt, from:acc, entries};
+    const op = {reason:$("#c_reason").value, type:"cut", date:f("c_date").value || today(), createdAt:Date.now(), status:"active", note, amount:amt, cur, tocur:to, rate, rateTxt, from:acc, entries};
     const btn = f("cf").querySelector("button[type=submit]"); btn.disabled = true;
-    try { await saveOp(op); f("c_ok").textContent = `حُفظ القطع #${op.no}`; f("c_amt").value = ""; f("c_note").value = ""; calc(); }
+    try { await saveOp(op); f("c_ok").textContent = `حُفظ القطع #${op.no}`; f("c_amt").value = ""; f("c_note").value = ""; f("c_reason").value = ""; calc(); }
     catch(err) { f("c_err").textContent = "تعذّر الحفظ: " + (err.message || err.code || "خطأ"); }
     finally { btn.disabled = readOnly; }
   };
@@ -659,6 +684,26 @@ async function downloadCsv(acc, cur, pre, rows, sumD, sumC, fin) {
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
 
+// ----- add reason dialog -----
+$("#nr_close").onclick = () => $("#reasonDlg").close();
+$("#reasonForm").onsubmit = async e => {
+  e.preventDefault();
+  const r = $("#nr_name").value.trim(), list = settings.reasons || [];
+  if (!r) { $("#nr_err").textContent = "أدخل السبب"; return; }
+  $("#nr_go").disabled = true;
+  try {
+    if (!list.includes(r)) {
+      const next = {...settings, reasons:[...list, r]};
+      must(await sb.from("settings").upsert({owner:me.id, data:next}));
+      settings = next;
+    }
+    document.querySelectorAll("select").forEach(sel => { if (!sel.querySelector(`option[value="${NEW_REASON}"]`)) return; const v = sel.value; sel.innerHTML = reasonOpts(v); });
+    if (reasonTarget) reasonTarget.value = r;
+    $("#reasonDlg").close();
+  } catch(err) { $("#nr_err").textContent = "تعذّر الحفظ: " + (err.message || err.code); }
+  finally { $("#nr_go").disabled = false; }
+};
+
 // ----- add account dialog -----
 $("#na_close").onclick = () => $("#accDlg").close();
 $("#accForm").onsubmit = async e => {
@@ -777,6 +822,7 @@ views.rates = () => {
     <div class="grid">
       <label>العملات (افصل بفاصلة)<input id="r_curs" value="${esc(s.currencies.join(", "))}"></label>
       <label>الدول (افصل بفاصلة)<input id="r_countries" value="${esc(s.countries.join("، "))}"></label>
+      <label>أسباب التحويل (افصل بفاصلة)<input id="r_reasons" value="${esc((s.reasons||[]).join("، "))}"></label>
     </div>
     <div class="err" id="r_err" role="alert"></div>
     <div class="btns"><button class="p" type="submit" ${readOnly?"disabled":""}>حفظ</button><span class="okmsg" id="r_ok"></span></div>
@@ -798,7 +844,8 @@ views.rates = () => {
     for (const c of currencies) if (usdRates[c] === undefined && s.usdRates[c]) usdRates[c] = s.usdRates[c];
     if (bad.length) { $("#r_err").textContent = "سعر غير صالح: " + bad.join("، "); return; }
     if (!countries.length) { $("#r_err").textContent = "أدخل دولة واحدة على الأقل"; return; }
-    const next = {currencies, countries, usdRates, feeMode:$("#r_fee").value, cutBothLegs:$("#r_cut").checked, ratesUpdated:Date.now()};
+    const reasons = [...new Set($("#r_reasons").value.split(/[,،]/).map(x => x.trim()).filter(Boolean))];
+    const next = {currencies, countries, reasons, usdRates, feeMode:$("#r_fee").value, cutBothLegs:$("#r_cut").checked, ratesUpdated:Date.now()};
     try { must(await sb.from("settings").upsert({owner:me.id, data:next})); await loadAll(); $("#r_ok").textContent = "تم الحفظ"; }
     catch(err) { $("#r_err").textContent = "تعذّر الحفظ: " + (err.message || err.code); }
   };
