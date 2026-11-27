@@ -42,6 +42,17 @@ nav a{color:var(--top-ink);text-decoration:none;padding:8px 14px;white-space:now
 .ic{width:18px;height:18px;fill:url(#gold);vertical-align:-3px;margin-inline-end:6px;filter:drop-shadow(0 1px 0 rgba(90,60,5,.45)) drop-shadow(0 0 1px rgba(255,255,255,.9))}
 .ic.coin{width:26px;height:26px;vertical-align:-6px;margin-inline-end:4px}
 nav a.on .ic{filter:drop-shadow(0 1px 1px rgba(90,60,5,.55)) drop-shadow(0 0 2px rgba(255,236,160,.9))}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+@media (min-width:700px){.tiles{grid-template-columns:repeat(4,1fr)}}
+.tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:120px;padding:16px;text-align:center;
+  background:linear-gradient(160deg,var(--surface),var(--bg));border:1px solid var(--line);border-radius:14px;color:var(--ink);text-decoration:none;font-weight:600;
+  box-shadow:0 1px 0 #fff inset,0 2px 6px rgba(28,40,51,.08)}
+.tile:active{transform:scale(.98)}
+.tile .ic{width:44px;height:44px;margin:0}
+.plist{display:flex;flex-direction:column;gap:10px}
+.pcard{display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:start;padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);width:100%}
+.pname{font-weight:600;font-size:16px}
+.pusd{font-size:20px;font-weight:700} .pusd small{font-size:12px;font-weight:500}
 nav a.on{background:var(--bg);color:var(--accent);opacity:1;font-weight:600}
 main{max-width:1200px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px;display:flex;flex-direction:column;gap:16px}
 h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.3}
@@ -118,11 +129,13 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   <symbol id="i-log" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 1a11 11 0 1 1 0 22 11 11 0 0 1 0-22zm-1.3 5v7.4l5.6 3.3 1.3-2.2-4.3-2.5V6h-2.6z"/></symbol>
   <symbol id="i-usr" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M9 3a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm8.5 2a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM0 21c0-4.5 4-7 9-7s9 2.5 9 7H0zm19.5 0c0-2.3-.8-4.1-2.2-5.4 3.6.2 6.7 2 6.7 5.4h-4.5z"/></symbol>
   <symbol id="i-pct" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6.5 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm11 12a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM19 2.5l2.5 2.5L5 21.5 2.5 19z"/></symbol>
+  <symbol id="i-home" viewBox="0 0 24 24"><path d="M12 2 1 11.5h3V22h6v-6h4v6h6V11.5h3z"/></symbol>
   <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><circle cx="12" cy="12" r="8.3" fill="none" stroke="#8a6212" stroke-opacity=".55" stroke-width="1"/><path fill="#7a5410" fill-opacity=".85" d="M12.9 5.5v1.4c1.6.2 2.8 1 3.3 2.4l-1.9.8c-.3-.8-1-1.3-2-1.3-1.1 0-1.7.5-1.7 1.1 0 .7.6 1 2.1 1.4 2.2.6 3.7 1.3 3.7 3.4 0 1.6-1.2 2.8-3.5 3v1.4h-1.8v-1.4c-1.9-.2-3.2-1.2-3.6-2.8l2-.7c.3 1 1.1 1.6 2.4 1.6 1.2 0 1.9-.5 1.9-1.2 0-.8-.7-1.1-2.3-1.5-2-.5-3.5-1.2-3.5-3.2 0-1.5 1.1-2.6 3.1-2.9V5.5h1.8z"/></symbol>
 </svg>
 <header class="top">
   <div class="top-row"><span class="brand"><svg class="ic coin" aria-hidden="true"><use href="#i-coin"/></svg> صرافة · الحوالات والأرصدة</span><span><span class="status" id="status">جارِ تحميل البيانات…</span> <button type="button" id="logout" hidden style="padding:2px 10px;font-size:12px">خروج</button></span></div>
   <nav id="nav" aria-label="الأقسام">
+    <a href="#home"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>الرئيسية</a>
     <a href="#balances"><svg class="ic" aria-hidden="true"><use href="#i-bal"/></svg>الأرصدة</a>
     <a href="#transfer"><svg class="ic" aria-hidden="true"><use href="#i-tr"/></svg>حوالة جديدة</a>
     <a href="#move"><svg class="ic" aria-hidden="true"><use href="#i-cash"/></svg>حركة نقدية</a>
@@ -220,6 +233,18 @@ function words(n) {
 console.assert(words(3377) === "ثلاثة آلاف وثلاثمائة وسبعة وسبعون", "words(3377)");
 console.assert(words(289452) === "مائتان وتسعة وثمانون ألف وأربعمائة واثنان وخمسون", "words(289452)");
 
+// ---------- USD equivalent, fixed at the time of each operation ----------
+// ur = units of the entry currency per 1 USD, saved on the entry so later rate changes never move old balances.
+const usdRateOf = c => c === "USD" ? 1 : +((settings.usdRates || {})[c]) || 0;
+function pairUsdRates(a, b, rate) { // rate = units of b per 1 unit of a (the operation's own rate)
+  if (a === "USD") return {[a]:1, [b]:rate};
+  if (b === "USD") return {[a]:1 / rate, [b]:1};
+  const ua = usdRateOf(a); return {[a]:ua, [b]:ua * rate};
+}
+const stampUsd = (entries, rates) => entries.forEach(e => { e.ur = rates[e.cur] || usdRateOf(e.cur); });
+const entryUsd = e => { const ur = e.ur || usdRateOf(e.cur); return ur ? ((e.credit||0) - (e.debit||0)) / ur : 0; };
+console.assert(Math.abs(entryUsd({cur:"AED", credit:3672.5, ur:3.6725}) - 1000) < 1e-9, "entryUsd");
+
 // ---------- entries / balances ----------
 function allEntries() {
   const out = [];
@@ -271,8 +296,8 @@ const views = {};
 const FORMS = new Set(["transfer","move","cut","rates"]);
 let current = null;
 function route(fromData) {
-  const v = (location.hash || "#balances").slice(1);
-  const name = views[v] ? v : "balances";
+  const v = (location.hash || "#home").slice(1);
+  const name = views[v] ? v : "home";
   document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + name));
   if (window.__dbFailed) return;
   if (!(loaded.acc && loaded.ops && loaded.set)) { $("#app").innerHTML = `<div class="empty">جارِ تحميل البيانات…</div>`; return; }
@@ -286,19 +311,31 @@ const needAccounts = () => accounts.length ? "" : `<div class="banner">لا تو
 
 // ----- balances -----
 views.balances = () => {
-  const b = balances();
-  const curs = settings.currencies;
-  const tot = {}; for (const a in b) for (const c in b[a]) tot[c] = r2((tot[c]||0) + b[a][c]);
-  const rows = accounts.slice().sort((x,y)=>x.name.localeCompare(y.name,"ar")).map(a => `<tr data-acc="${esc(a.id)}" tabindex="0" style="cursor:pointer"><td>${esc(a.name)}</td><td>${esc(a.country)}</td>${curs.map(c => { const v=(b[a.id]||{})[c]||0; return `<td class="n num ${sideCls(v)}">${v?fmtBal(v):"—"}</td>`; }).join("")}</tr>`).join("");
+  const b = balances(), usd = {};
+  for (const o of ops) for (const e of (o.entries||[])) usd[e.acc] = (usd[e.acc]||0) + entryUsd(e);
+  const total = r5(Object.values(usd).reduce((x,y) => x + y, 0));
+  const list = accounts.slice().sort((x,y)=>x.name.localeCompare(y.name,"ar"));
+  const card = a => { const u = r5(usd[a.id]||0), cs = Object.entries(b[a.id]||{}).filter(([,v]) => r2(v));
+    return `<button type="button" class="pcard" data-acc="${esc(a.id)}">
+      <span class="pname">${esc(a.name)} <small class="hint">${esc(a.country)}</small></span>
+      <span class="pusd ${sideCls(u)}"><span class="num">${fmt(Math.abs(u))} USD</span> <small>${side(u) || "متوازن"}</small></span>
+      <span class="chips">${cs.map(([c,v]) => `<span class="chip" data-cur="${esc(c)}"><span class="num">${fmtBal(v)} ${esc(c)}</span> ${side(v)}</span>`).join("") || `<span class="hint">لا توجد حركات</span>`}</span>
+    </button>`; };
   $("#app").innerHTML = `${needAccounts()}
   <h1>الأرصدة</h1>
-  <p class="hint">الرقم بين قوسين = لنا (مدين)، والرقم العادي = علينا (دائن). اضغط على أي حساب لفتح كشفه.</p>
-  <div class="kpis">${curs.map(c => `<div class="kpi"><small>المجموع ${esc(c)}</small><strong class="num ${sideCls(tot[c]||0)}">${fmtBal(tot[c]||0)}</strong><small>${side(tot[c]||0)}</small></div>`).join("")}</div>
-  <div class="card"><div class="scroll"><table><thead><tr><th>الحساب</th><th>الدولة</th>${curs.map(c=>`<th class="n">${esc(c)}</th>`).join("")}</tr></thead><tbody>${rows || `<tr><td colspan="${curs.length+2}" class="empty">لا توجد حسابات</td></tr>`}</tbody></table></div></div>`;
-  document.querySelectorAll("tr[data-acc]").forEach(tr => {
-    const go = () => { ui.stAcc = tr.dataset.acc; ui.stCur = ""; ui.sel = null; saveUi(); location.hash = "#statement"; };
-    tr.onclick = go; tr.onkeydown = e => { if (e.key === "Enter") go(); };
+  <div class="balbox"><small class="hint">مجموع الأرصدة محوّلاً إلى الدولار بأسعار وقت كل عملية</small><strong class="num ${sideCls(total)}">${fmt(Math.abs(total))} USD</strong><span class="pill ${total<0?"bad":"ok"}">${total<0?"لنا":total>0?"علينا":"متوازن"}</span></div>
+  <p class="hint">لكل شخص: الرصيد الموحّد بالدولار، وتحته رصيد كل عملة. الرقم بين قوسين = لنا. اضغط على العملة لفتح كشفها.</p>
+  <div class="plist">${list.map(card).join("")}</div>`;
+  document.querySelectorAll(".pcard").forEach(btn => btn.onclick = e => {
+    const chip = e.target.closest("[data-cur]");
+    ui.stAcc = btn.dataset.acc; ui.stCur = chip ? chip.dataset.cur : ""; ui.sel = null; saveUi(); location.hash = "#statement";
   });
+};
+
+// ----- home -----
+const SECTIONS = [["balances","bal","الأرصدة"],["transfer","tr","حوالة جديدة"],["move","cash","حركة نقدية"],["cut","ex","قطع / تحويل عملة"],["statement","doc","كشف حساب"],["log","log","سجل العمليات"],["accounts","usr","الحسابات"],["rates","pct","أسعار اليوم والإعدادات"]];
+views.home = () => {
+  $("#app").innerHTML = `${needAccounts()}<div class="tiles">${SECTIONS.map(([h,i,t]) => `<a class="tile" href="#${h}"><svg class="ic" aria-hidden="true"><use href="#i-${i}"/></svg><span>${t}</span></a>`).join("")}</div>`;
 };
 
 // ----- new transfer -----
@@ -376,6 +413,7 @@ views.transfer = () => {
       {acc:to, cur:tocur, debit:0, credit:c.toAmt, kind:"حوالة", desc:`حوالة واردة من ${accName(from)}: ${fmt(amt)} ${cur}` + (cur!==tocur?` على سعر ${rateTxt}`:"") + (note?" · "+note:""), recon:""}
     ];
     if (c.fee > 0) entries.splice(1, 0, {acc:from, cur, debit:c.fee, credit:0, kind:"عمولة", fee:true, desc:`عمولة ${fee}% ${desc}`, recon:""});
+    stampUsd(entries, cur === tocur ? {[cur]:usdRateOf(cur)} : pairUsdRates(cur, tocur, rate));
     const op = {type:"transfer", date:f("t_date").value, createdAt:Date.now(), status:"active", note, country:f("t_country").value,
       amount:amt, cur, tocur, rate, rateTxt, feePct:fee, feeAmt:c.fee, feeMode:settings.feeMode, from, to, entries};
     const btn = f("tf").querySelector("button[type=submit]"); btn.disabled = true;
@@ -424,6 +462,7 @@ views.move = () => {
     const desc = `${TYPE_LBL[type]} ${fmt(amt)} ${cur}` + (note ? " · " + note : "");
     const entries = [{acc, cur, debit: sd==="debit"?amt:0, credit: sd==="credit"?amt:0, kind:TYPE_LBL[type], desc, recon:""}];
     if (feeAmt > 0) entries.push({acc, cur, debit:feeAmt, credit:0, kind:"عمولة", fee:true, desc:`عمولة ${fee}% ${desc}`, recon:""});
+    stampUsd(entries, {[cur]:usdRateOf(cur)});
     const op = {type, date:f("m_date").value || today(), createdAt:Date.now(), status:"active", note, amount:amt, cur, feePct:fee, feeAmt, from:acc, entries};
     const btn = f("mf").querySelector("button[type=submit]"); btn.disabled = true;
     try { await saveOp(op); f("m_ok").textContent = `حُفظت الحركة #${op.no}`; f("m_amt").value = ""; f("m_note").value = ""; }
@@ -478,6 +517,7 @@ views.cut = () => {
     const desc = `قطع مبلغ: ${fmt(amt)} ${cur} بسعر ${rateTxt} = ${fmt(other)} ${to}` + (note ? " · " + note : "");
     const entries = [{acc, cur, debit:0, credit:amt, kind:"قطع", desc, recon:""}];
     if (settings.cutBothLegs) entries.push({acc, cur:to, debit:other, credit:0, kind:"قطع", desc, recon:""});
+    stampUsd(entries, pairUsdRates(cur, to, rate));
     const op = {type:"cut", date:f("c_date").value || today(), createdAt:Date.now(), status:"active", note, amount:amt, cur, tocur:to, rate, rateTxt, from:acc, entries};
     const btn = f("cf").querySelector("button[type=submit]"); btn.disabled = true;
     try { await saveOp(op); f("c_ok").textContent = `حُفظ القطع #${op.no}`; f("c_amt").value = ""; f("c_note").value = ""; calc(); }
@@ -622,7 +662,7 @@ $("#cancelGo").onclick = async () => {
   const op = cancelling; if (!op) return;
   const refund = $("#refundFee").checked, reason = $("#cancelReason").value.trim();
   const rev = op.entries.filter(e => !e.reversal && (!e.fee || refund)).map(e => ({
-    acc:e.acc, cur:e.cur, debit:e.credit||0, credit:e.debit||0, kind:"إلغاء", reversal:true,
+    acc:e.acc, cur:e.cur, ur:e.ur, debit:e.credit||0, credit:e.debit||0, kind:"إلغاء", reversal:true,
     desc:`إلغاء ${e.kind}: ${e.desc}` + (reason ? " · السبب: " + reason : ""), recon:""}));
   const btn = $("#cancelGo"); btn.disabled = true;
   try {
