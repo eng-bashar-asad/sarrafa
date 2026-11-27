@@ -155,7 +155,7 @@ const DEFAULT_SETTINGS = {
   countries: ["الإمارات","مصر","سوريا","لبنان","تركيا","ألمانيا"],
   // 1 USD = x. Cross rates are derived through USD.
   usdRates: {USD:1, AED:3.6725, EGP:48.5, EUR:0.92, SYP:138.5},
-  feeMode: "top",        // "top": fee charged on top to sender | "deduct": fee taken out of the amount sent
+  feeMode: "deduct",     // "deduct" (default, owner's rule): fee taken out of the amount sent | "top": fee charged on top to sender
   cutBothLegs: true,     // a cut posts both currencies on the same account
   ratesUpdated: null
 };
@@ -259,6 +259,9 @@ async function loadAll() {
 }
 function setStatus(t) { $("#status").textContent = t; }
 
+// Clean typed numbers on leaving a field: "01.8" -> "1.8", "007" -> "7".
+document.addEventListener("focusout", e => { const i = e.target; if (i.matches?.("input[inputmode=decimal]") && /^0\d/.test(i.value)) { i.value = i.value.replace(/^0+(?=\d)/, ""); i.dispatchEvent(new Event("input")); } });
+
 // ---------- views ----------
 const views = {};
 // Forms are not redrawn by live data updates, so typing is never wiped; lists and statements are.
@@ -303,6 +306,7 @@ views.transfer = () => {
     <div class="grid">
       <label>التاريخ<input type="date" id="t_date" value="${today()}"></label>
       <label>من حساب<select id="t_from">${accOpts("")}</select></label>
+      <label>دولة المصدر (التي خرجت منها الحوالة)<select id="t_country"><option value="">اختر الدولة</option>${settings.countries.map(c=>`<option>${esc(c)}</option>`).join("")}</select></label>
       <label>الرصيد الحالي<input id="t_bal" readonly tabindex="-1"></label>
     </div>
     <div class="grid">
@@ -311,11 +315,10 @@ views.transfer = () => {
       <label><span id="t_ratelbl">سعر الصرف (قابل للتعديل)</span><input id="t_rate" inputmode="decimal"><span class="hint" id="t_ratehint"></span></label>
     </div>
     <div class="grid">
-      <label>الدولة<select id="t_country"><option value="">اختر الدولة</option>${settings.countries.map(c=>`<option>${esc(c)}</option>`).join("")}</select></label>
       <label>إلى حساب<select id="t_to">${accOpts("")}</select></label>
-      <label>نسبة العمولة %<input id="t_fee" inputmode="decimal" value="0"></label>
+      <label>نسبة العمولة %<input id="t_fee" inputmode="decimal" placeholder="0"></label>
     </div>
-    <label>ملاحظات (وصف أو علامة مميزة)<textarea id="t_note" maxlength="300" placeholder="مثلاً: دفعة ثمن منزل"></textarea></label>
+    <label>ملاحظات (وصف أو علامة مميزة)<textarea id="t_note" maxlength="300" placeholder="مثلاً: دفعة ثمن منزل، سُلّمت في موناكو"></textarea></label>
     <div class="chips" id="t_quick"></div>
     <div class="summary" id="t_sum"></div>
     <div class="err" id="t_err" role="alert"></div>
@@ -348,7 +351,7 @@ views.transfer = () => {
   ["t_amt","t_fee","t_from"].forEach(id => f(id).addEventListener("input", calc));
   f("t_rate").addEventListener("input", () => { rateTouched = true; calc(); });
   f("t_cur").onchange = f("t_tocur").onchange = () => { rateTouched = false; setRate(); };
-  f("t_to").onchange = () => { const a = accounts.find(a => a.id === f("t_to").value); if (a && !f("t_country").value) f("t_country").value = a.country; };
+  f("t_from").addEventListener("change", () => { const a = accounts.find(a => a.id === f("t_from").value); if (a) f("t_country").value = a.country; });
   setRate();
   f("tf").onsubmit = async e => {
     e.preventDefault(); f("t_err").textContent = ""; f("t_ok").textContent = "";
@@ -398,7 +401,7 @@ views.move = () => {
     <div class="grid">
       <label>المبلغ والعملة<span class="pair"><input id="m_amt" inputmode="decimal" placeholder="0.00"><select id="m_cur">${curOpts("USD")}</select></span></label>
       <label>الجهة<select id="m_side"><option value="credit">دائن / علينا (يزيد رصيده عندنا)</option><option value="debit">مدين / لنا (ينقص رصيده)</option></select></label>
-      <label>عمولة % (اختياري)<input id="m_fee" inputmode="decimal" value="0"></label>
+      <label>عمولة % (اختياري)<input id="m_fee" inputmode="decimal" placeholder="0"></label>
     </div>
     <label>البيان / الملاحظات<textarea id="m_note" maxlength="300" placeholder="مثلاً: نقداً باليد، أو إيداع عن طريق زيد"></textarea></label>
     <div class="err" id="m_err" role="alert"></div>
