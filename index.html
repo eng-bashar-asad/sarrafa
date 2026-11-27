@@ -716,7 +716,7 @@ function showLogin(msg="") {
   const go = async signup => {
     const email = $("#l_email").value.trim(), password = $("#l_pass").value;
     if (!email || password.length < 8) { $("#l_msg").textContent = "اكتب البريد وكلمة سر 8 أحرف على الأقل"; return; }
-    const {error} = signup ? await sb.auth.signUp({email, password}) : await sb.auth.signInWithPassword({email, password});
+    const {error} = signup ? await sb.auth.signUp({email, password, options:{emailRedirectTo:location.origin + location.pathname}}) : await sb.auth.signInWithPassword({email, password});
     if (error) { $("#l_msg").textContent = "ما زبط: " + error.message; return; }
     if (signup) $("#l_msg").textContent = "انعمل الحساب. إذا وصلك إيميل تأكيد، افتحه وبعدين سجّل دخول.";
   };
