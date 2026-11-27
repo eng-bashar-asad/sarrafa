@@ -869,6 +869,12 @@ views.accounts = () => {
 };
 
 // ----- rates & settings -----
+const APP_VERSION = "22";
+// Drops the service worker and its cached files, then reloads from the server. Data lives in Supabase, so nothing is lost.
+document.addEventListener("click", async e => { if (e.target.id !== "forceUpdate") return;
+  e.target.disabled = true; e.target.textContent = "جارٍ التحديث…";
+  try { for (const r of await navigator.serviceWorker?.getRegistrations?.() || []) await r.unregister(); for (const k of await caches.keys()) await caches.delete(k); } catch {}
+  location.replace(location.pathname + "?v=" + Date.now() + "#home"); });
 const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"],["transmind","TransMind (متحرك)"]];
 document.addEventListener("click", e => { const b = e.target.closest("[data-theme-pick]"); if (!b) return;
   const t = b.dataset.themePick; if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
@@ -895,6 +901,11 @@ views.rates = () => {
     <div class="err" id="r_err" role="alert"></div>
     <div class="btns"><button class="p" type="submit" ${readOnly?"disabled":""}>حفظ</button><span class="okmsg" id="r_ok"></span></div>
   </form>
+  <div class="card">
+    <h2>تحديث التطبيق</h2>
+    <p class="hint">الإصدار الحالي: <span class="num">${APP_VERSION}</span>. إذا لم تظهر آخر التعديلات، اضغط هنا لتنزيل أحدث نسخة. لا تُحذف أي بيانات.</p>
+    <div class="btns"><button type="button" id="forceUpdate">تنزيل أحدث نسخة الآن</button></div>
+  </div>
   <div class="card">
     <h2>مظهر التطبيق</h2>
     <p class="hint">يُطبَّق فوراً على هذا الجهاز.</p>
