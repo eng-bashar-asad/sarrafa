@@ -9,9 +9,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="TransMind">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
-<script>try{const t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{let t=localStorage.getItem("theme");if(t==="goldmind"){t="transmind";localStorage.setItem("theme",t)}if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 <script src="vendor/supabase.js"></script>
 <script src="config.js"></script>
 <style>:root{box-sizing:border-box}body{margin:0;font:14px sans-serif}[hidden]{display:none!important}</style>
@@ -36,16 +36,14 @@
   --hl:rgba(255,255,255,.07);--sh:rgba(0,0,0,.55);color-scheme:dark}
 :root[data-theme="sand"]{--bg:#f3eee4;--surface:#faf7f0;--ink:#2e2618;--muted:#6f6450;--line:#d9cfbd;--accent:#8a5a2b;--accent-soft:#efe2cf;--brass:#8a5a2b;--brass-soft:#ece3d3;
   --top:#e8dcc5;--top-ink:#4a3418;--g1:#f1e7d6;--g2:#efeae0;--g3:#eef0e0;--g4:#f2e6e0;--sh:rgba(60,40,15,.18)}
-:root[data-theme="goldmind"]{--bg:#f6f1e6;--surface:#fffaf0;--ink:#2b2418;--muted:#6e6250;--line:#e2d6bf;--accent:#7A6640;--accent-soft:#efe5cf;--brass:#7A6640;--brass-soft:#efe7d6;
-  --top:#efe3c8;--top-ink:#4a3a1c;--ok:#3F6B47;--bad:#8A3B32;--g1:#f4ead6;--g2:#f1ece2;--g3:#eef0dc;--g4:#f3e6dc;--sel:#ffe9a8;--sh:rgba(90,70,30,.2)}
-/* GoldMind theme: the company logo drifts slowly behind the content, with a soft gold light sweeping across. */
-:root[data-theme="goldmind"] body::after{content:"";position:fixed;inset:-120px;z-index:-1;pointer-events:none;opacity:.08;
-  background:url("brand/goldmind-logo.svg") 0 0/110px 110px repeat;animation:gmDrift 60s linear infinite}
-:root[data-theme="goldmind"] main::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
-  background:linear-gradient(115deg,transparent 35%,rgba(255,226,150,.35) 50%,transparent 65%) 0 0/300% 100%;animation:gmShine 9s ease-in-out infinite}
-@keyframes gmDrift{to{transform:translate(110px,110px) rotate(0.001deg)}}
-@keyframes gmShine{0%{background-position:100% 0}100%{background-position:-100% 0}}
-@media (prefers-reduced-motion:reduce){:root[data-theme="goldmind"] body::after,:root[data-theme="goldmind"] main::before{animation:none}}
+:root[data-theme="transmind"]{--bg:#070d18;--surface:rgba(18,30,50,.88);--ink:#e9f0f7;--muted:#9fb3c8;--line:#26405f;--accent:#2f8fe0;--accent-soft:#132c47;--brass:#8fd4ff;--brass-soft:#1a2a3d;
+  --top:#0b1626;--top-ink:#dfeaf5;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#132a44;--g2:#18243a;--g3:#122f3c;--g4:#1d2340;--sel:#3a3410;
+  --hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
+/* TransMind theme: the animated company logo (vector, sharp at any size) sits behind the content. */
+:root[data-theme="transmind"] body{background:#05080f}
+:root[data-theme="transmind"] .tile{background:linear-gradient(160deg,rgba(24,40,64,.55),rgba(8,14,26,.5));-webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px)}
+:root[data-theme="transmind"] body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.8;
+  background:#05080f url("brand/transmind-logo.svg") center 45%/min(100vw,100vh,760px) no-repeat}
 :root[data-theme="emerald"]{--bg:#edf2ef;--surface:#f7faf8;--ink:#18302a;--muted:#58706a;--line:#c8d6d0;--accent:#1f6f8b;--accent-soft:#d7eaf0;--brass:#1f6f8b;--brass-soft:#e1ebe7;
   --top:#d3eadf;--top-ink:#134535;--g1:#e0f0e8;--g2:#e8ecea;--g3:#dcefee;--g4:#e5e9f2;--sh:rgba(15,50,40,.18)}
 *,*::before,*::after{box-sizing:border-box}
@@ -156,10 +154,9 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   <symbol id="i-usr" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M9 3a4.5 4.5 0 1 1 0 9 4.5 4.5 0 0 1 0-9zm8.5 2a3.5 3.5 0 1 1 0 7 3.5 3.5 0 0 1 0-7zM0 21c0-4.5 4-7 9-7s9 2.5 9 7H0zm19.5 0c0-2.3-.8-4.1-2.2-5.4 3.6.2 6.7 2 6.7 5.4h-4.5z"/></symbol>
   <symbol id="i-pct" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M6.5 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8zm11 12a4 4 0 1 1 0 8 4 4 0 0 1 0-8zM19 2.5l2.5 2.5L5 21.5 2.5 19z"/></symbol>
   <symbol id="i-home" viewBox="0 0 24 24"><path d="M12 2 1 11.5h3V22h6v-6h4v6h6V11.5h3z"/></symbol>
-  <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><circle cx="12" cy="12" r="8.3" fill="none" stroke="#8a6212" stroke-opacity=".55" stroke-width="1"/><path fill="#7a5410" fill-opacity=".85" d="M12.9 5.5v1.4c1.6.2 2.8 1 3.3 2.4l-1.9.8c-.3-.8-1-1.3-2-1.3-1.1 0-1.7.5-1.7 1.1 0 .7.6 1 2.1 1.4 2.2.6 3.7 1.3 3.7 3.4 0 1.6-1.2 2.8-3.5 3v1.4h-1.8v-1.4c-1.9-.2-3.2-1.2-3.6-2.8l2-.7c.3 1 1.1 1.6 2.4 1.6 1.2 0 1.9-.5 1.9-1.2 0-.8-.7-1.1-2.3-1.5-2-.5-3.5-1.2-3.5-3.2 0-1.5 1.1-2.6 3.1-2.9V5.5h1.8z"/></symbol>
 </svg>
 <header class="top">
-  <div class="top-row"><button type="button" id="homeBtn" class="homebtn" hidden><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>الرئيسية</button><span class="brand"><svg class="ic coin" aria-hidden="true"><use href="#i-coin"/></svg> <bdi>TransMind</bdi> · الحوالات والأرصدة</span><span><span class="status" id="status">جارِ تحميل البيانات…</span> <button type="button" id="logout" hidden style="padding:2px 10px;font-size:12px">خروج</button></span></div>
+  <div class="top-row"><button type="button" id="homeBtn" class="homebtn" hidden><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>الرئيسية</button><span class="brand"><img src="brand/transmind-icon.svg" alt="" width="30" height="30" style="border-radius:8px;vertical-align:-8px;margin-inline-end:6px"> <bdi>TransMind</bdi> · الحوالات والأرصدة</span><span><span class="status" id="status">جارِ تحميل البيانات…</span> <button type="button" id="logout" hidden style="padding:2px 10px;font-size:12px">خروج</button></span></div>
 </header>
 <main id="app"><div class="empty">جارِ تحميل البيانات…</div></main>
 
@@ -872,7 +869,7 @@ views.accounts = () => {
 };
 
 // ----- rates & settings -----
-const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"],["goldmind","جولد ماين (متحرك)"]];
+const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"],["transmind","TransMind (متحرك)"]];
 document.addEventListener("click", e => { const b = e.target.closest("[data-theme-pick]"); if (!b) return;
   const t = b.dataset.themePick; if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { t ? localStorage.setItem("theme", t) : localStorage.removeItem("theme"); } catch {}
@@ -943,6 +940,7 @@ const authMsg = e => AUTH_MSG[e.code] || ("تعذّر تسجيل الدخول ("
 function showLogin(msg="") {
   $("#homeBtn").hidden = true; $("#logout").hidden = true; setStatus("");
   $("#app").innerHTML = `<form class="card" id="lf" style="max-width:380px;margin:40px auto;width:100%" novalidate>
+    <img src="brand/transmind-logo.svg" alt="TransMind" width="200" height="200" style="border-radius:16px;align-self:center">
     <h1>تسجيل الدخول</h1>
     <label>البريد الإلكتروني<input type="email" id="l_email" autocomplete="username" dir="ltr" required></label>
     <label>كلمة السر<input type="password" id="l_pass" autocomplete="current-password" dir="ltr" minlength="8" required></label>
@@ -1007,7 +1005,7 @@ function showLock(msg = "") {
   loaded = {acc:false, ops:false, set:false}; accounts = []; ops = []; // nothing stays readable behind the lock
   $("#homeBtn").hidden = true; $("#logout").hidden = true; setStatus("");
   $("#app").innerHTML = `<div class="card" style="max-width:380px;margin:40px auto;width:100%;align-items:center;text-align:center">
-    <svg class="ic coin" style="width:64px;height:64px" aria-hidden="true"><use href="#i-coin"/></svg>
+    <img src="brand/transmind-logo.svg" alt="TransMind" width="200" height="200" style="border-radius:16px">
     <h1>التطبيق مقفل</h1>
     <button class="p" type="button" id="bio_go">فتح بالبصمة / Face ID</button>
     <button type="button" id="bio_pw">الدخول بكلمة السر بدلاً من ذلك</button>
