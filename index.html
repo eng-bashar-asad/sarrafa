@@ -138,6 +138,16 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 </header>
 <main id="app"><div class="empty">جارِ تحميل البيانات…</div></main>
 
+<dialog id="accDlg">
+  <form method="dialog" id="accForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
+    <h2>إضافة حساب جديد</h2>
+    <label>الاسم (شخص أو شركة أو فرع)<input id="na_name" maxlength="80" placeholder="مثلاً: سامر الحكيم"></label>
+    <label>الدولة<select id="na_country"></select></label>
+    <label>النوع<select id="na_kind"><option value="person">فرد</option><option value="company">شركة</option><option value="branch">فرع</option></select></label>
+    <div class="err" id="na_err" role="alert"></div>
+    <div class="btns"><button type="submit" class="p" id="na_go">إضافة</button><button type="button" id="na_close">رجوع</button></div>
+  </form>
+</dialog>
 <dialog id="cancelDlg">
   <form method="dialog" id="cancelForm" style="display:flex;flex-direction:column;gap:12px">
     <h2 id="cancelTitle">إلغاء العملية</h2>
@@ -196,7 +206,20 @@ const rateOf = (from, to) => {
 };
 const fmtRate = x => { if (!x) return ""; const d = x >= 100 ? 2 : x >= 1 ? 4 : 6; return (+x.toFixed(d)).toString(); };
 const curOpts = sel => settings.currencies.map(c => `<option value="${esc(c)}"${c===sel?" selected":""}>${esc(c)}</option>`).join("");
-const accOpts = (sel, blank="اختر حساباً") => `<option value="">${blank}</option>` + accounts.slice().sort((a,b)=>a.name.localeCompare(b.name,"ar")).map(a => `<option value="${esc(a.id)}"${a.id===sel?" selected":""}>${esc(a.name)} · ${esc(a.country)}</option>`).join("");
+const KIND_LBL = {person:"فرد", company:"شركة", branch:"فرع"};
+const NEW_ACC = "__new";
+const accOpts = (sel, blank="اختر حساباً", canAdd=true) => `<option value="">${blank}</option>` + accounts.slice().sort((a,b)=>a.name.localeCompare(b.name,"ar")).map(a => `<option value="${esc(a.id)}"${a.id===sel?" selected":""}>${esc(a.name)} · ${esc(a.country)}${KIND_LBL[a.kind] ? " · " + KIND_LBL[a.kind] : ""}</option>`).join("")
+  + (canAdd && !readOnly ? `<option value="${NEW_ACC}">＋ إضافة حساب جديد…</option>` : "");
+// Any account picker: choosing "add new account" opens the dialog, then selects the new account.
+let accTarget = null;
+document.addEventListener("change", e => {
+  const sel = e.target;
+  if (!(sel instanceof HTMLSelectElement) || sel.value !== NEW_ACC) return;
+  e.stopImmediatePropagation(); sel.value = ""; accTarget = sel;
+  $("#na_name").value = ""; $("#na_err").textContent = "";
+  $("#na_country").innerHTML = settings.countries.map(c => `<option>${esc(c)}</option>`).join("");
+  $("#accDlg").showModal(); $("#na_name").focus();
+}, true);
 const nextNo = () => ops.reduce((m,o) => Math.max(m, o.no||0), 1000) + 1; // preview only; the real number comes from the database sequence
 
 // Arabic number to words (integers)
@@ -562,7 +585,7 @@ views.statement = () => {
   <div class="head">
     <div style="display:flex;flex-direction:column;gap:8px;min-width:0">
       <h1>كشف حساب</h1>
-      <label>الحساب<select id="s_acc">${accOpts(ui.stAcc, "اختر")}</select></label>
+      <label>الحساب<select id="s_acc">${accOpts(ui.stAcc, "اختر", false)}</select></label>
       <div class="chips" role="tablist">${curs.map(c => `<button type="button" class="chip${c===cur?" on":""}" data-cur="${esc(c)}">${esc(c)} · <span class="num">${fmtBal(b[c]||0)}</span> ${side(b[c]||0)}</button>`).join("")}</div>
     </div>
     <div class="balbox"><small class="hint">الرصيد ${ui.stTo?"حتى "+esc(ui.stTo):"الحالي"} · ${esc(CUR_NAMES[cur]||cur)}</small><strong class="num ${sideCls(finalBal)}">${fmt(Math.abs(finalBal))} ${esc(cur)}</strong><span class="pill ${finalBal<0?"bad":"ok"}">${finalBal<0?"مدين / لنا":finalBal>0?"دائن / علينا":"متوازن"}</span></div>
@@ -635,6 +658,25 @@ async function downloadCsv(acc, cur, pre, rows, sumD, sumC, fin) {
   a.download = `كشف-${acc.name}-${cur}.csv`; a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 5000);
 }
+
+// ----- add account dialog -----
+$("#na_close").onclick = () => $("#accDlg").close();
+$("#accForm").onsubmit = async e => {
+  e.preventDefault();
+  const name = $("#na_name").value.trim(), country = $("#na_country").value, kind = $("#na_kind").value;
+  if (!name) { $("#na_err").textContent = "أدخل اسم الحساب"; return; }
+  if (accounts.some(a => a.name === name && a.country === country)) { $("#na_err").textContent = "هذا الحساب موجود مسبقاً"; return; }
+  $("#na_go").disabled = true;
+  try {
+    const row = must(await sb.from("accounts").insert({name, country, kind}).select("id,name,country,kind").single());
+    accounts.push(row);
+    // refresh every account picker on the open form, keep their choices, select the new one in the picker that asked
+    document.querySelectorAll("select").forEach(sel => { if (!sel.querySelector(`option[value="${NEW_ACC}"]`)) return; const v = sel.value; sel.innerHTML = accOpts(v); });
+    if (accTarget) { accTarget.value = row.id; accTarget.dispatchEvent(new Event("change", {bubbles:true})); }
+    $("#accDlg").close();
+  } catch(err) { $("#na_err").textContent = "تعذّر الحفظ: " + (err.message || err.code); }
+  finally { $("#na_go").disabled = false; }
+};
 
 // ----- cancel -----
 let cancelling = null;
@@ -867,7 +909,11 @@ async function onSession(session) {
     if (me && bioId() && unlocked && Date.now() - hiddenAt > LOCK_AFTER_MS) { unlocked = false; showLock(); return; }
     if (me && (unlocked || !bioId())) loadAll().catch(() => {});
   });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  if ("serviceWorker" in navigator) {
+    const hadController = !!navigator.serviceWorker.controller; let reloaded = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => { if (hadController && !reloaded) { reloaded = true; location.reload(); } }); // pick up a new version at once
+    navigator.serviceWorker.register("sw.js", {updateViaCache:"none"}).then(r => r.update()).catch(() => {});
+  }
 })();
 </script>
 
