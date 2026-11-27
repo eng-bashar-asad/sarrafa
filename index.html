@@ -36,6 +36,16 @@
   --hl:rgba(255,255,255,.07);--sh:rgba(0,0,0,.55);color-scheme:dark}
 :root[data-theme="sand"]{--bg:#f3eee4;--surface:#faf7f0;--ink:#2e2618;--muted:#6f6450;--line:#d9cfbd;--accent:#8a5a2b;--accent-soft:#efe2cf;--brass:#8a5a2b;--brass-soft:#ece3d3;
   --top:#e8dcc5;--top-ink:#4a3418;--g1:#f1e7d6;--g2:#efeae0;--g3:#eef0e0;--g4:#f2e6e0;--sh:rgba(60,40,15,.18)}
+:root[data-theme="goldmind"]{--bg:#f6f1e6;--surface:#fffaf0;--ink:#2b2418;--muted:#6e6250;--line:#e2d6bf;--accent:#7A6640;--accent-soft:#efe5cf;--brass:#7A6640;--brass-soft:#efe7d6;
+  --top:#efe3c8;--top-ink:#4a3a1c;--ok:#3F6B47;--bad:#8A3B32;--g1:#f4ead6;--g2:#f1ece2;--g3:#eef0dc;--g4:#f3e6dc;--sel:#ffe9a8;--sh:rgba(90,70,30,.2)}
+/* GoldMind theme: the company logo drifts slowly behind the content, with a soft gold light sweeping across. */
+:root[data-theme="goldmind"] body::after{content:"";position:fixed;inset:-120px;z-index:-1;pointer-events:none;opacity:.08;
+  background:url("brand/goldmind-logo.svg") 0 0/110px 110px repeat;animation:gmDrift 60s linear infinite}
+:root[data-theme="goldmind"] main::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(115deg,transparent 35%,rgba(255,226,150,.35) 50%,transparent 65%) 0 0/300% 100%;animation:gmShine 9s ease-in-out infinite}
+@keyframes gmDrift{to{transform:translate(110px,110px) rotate(0.001deg)}}
+@keyframes gmShine{0%{background-position:100% 0}100%{background-position:-100% 0}}
+@media (prefers-reduced-motion:reduce){:root[data-theme="goldmind"] body::after,:root[data-theme="goldmind"] main::before{animation:none}}
 :root[data-theme="emerald"]{--bg:#edf2ef;--surface:#f7faf8;--ink:#18302a;--muted:#58706a;--line:#c8d6d0;--accent:#1f6f8b;--accent-soft:#d7eaf0;--brass:#1f6f8b;--brass-soft:#e1ebe7;
   --top:#d3eadf;--top-ink:#134535;--g1:#e0f0e8;--g2:#e8ecea;--g3:#dcefee;--g4:#e5e9f2;--sh:rgba(15,50,40,.18)}
 *,*::before,*::after{box-sizing:border-box}
@@ -862,7 +872,7 @@ views.accounts = () => {
 };
 
 // ----- rates & settings -----
-const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"]];
+const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"],["goldmind","جولد ماين (متحرك)"]];
 document.addEventListener("click", e => { const b = e.target.closest("[data-theme-pick]"); if (!b) return;
   const t = b.dataset.themePick; if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { t ? localStorage.setItem("theme", t) : localStorage.removeItem("theme"); } catch {}
@@ -971,9 +981,16 @@ async function bioRegister() {
     authenticatorSelection:{authenticatorAttachment:"platform", userVerification:"required", residentKey:"discouraged"}, timeout:60000}});
   localStorage.setItem(BIO_KEY, b64u(c.rawId));
 }
-const bioVerify = () => navigator.credentials.get({publicKey:{
-  challenge:crypto.getRandomValues(new Uint8Array(32)), allowCredentials:[{type:"public-key", id:unb64u(bioId())}],
-  userVerification:"required", timeout:60000}});
+// A prompt can hang (e.g. tapped while the app was still resuming). Each tap cancels the previous request and
+// starts a fresh one, and a stuck request is abandoned after 20 s, so the next tap always works.
+let bioAbort = null;
+const bioVerify = () => {
+  bioAbort?.abort();
+  const ac = bioAbort = new AbortController(), timer = setTimeout(() => ac.abort(), 20000);
+  return navigator.credentials.get({signal:ac.signal, publicKey:{
+    challenge:crypto.getRandomValues(new Uint8Array(32)), allowCredentials:[{type:"public-key", id:unb64u(bioId())}],
+    userVerification:"required", timeout:20000}}).finally(() => { clearTimeout(timer); if (bioAbort === ac) bioAbort = null; });
+};
 async function bioSettings() {
   const btn = $("#bio_btn"), err = $("#bio_err");
   if (!(await bioSupported())) { btn.textContent = "هذا الجهاز أو المتصفح لا يدعم البصمة"; return; }
@@ -986,6 +1003,7 @@ async function bioSettings() {
   };
 }
 function showLock(msg = "") {
+  if ($("#bio_go") && !msg) return; // already showing: redrawing would drop a tap in progress
   loaded = {acc:false, ops:false, set:false}; accounts = []; ops = []; // nothing stays readable behind the lock
   $("#homeBtn").hidden = true; $("#logout").hidden = true; setStatus("");
   $("#app").innerHTML = `<div class="card" style="max-width:380px;margin:40px auto;width:100%;align-items:center;text-align:center">
@@ -995,8 +1013,14 @@ function showLock(msg = "") {
     <button type="button" id="bio_pw">الدخول بكلمة السر بدلاً من ذلك</button>
     <div class="err" id="bio_msg" role="alert">${esc(msg)}</div></div>`;
   $("#bio_go").onclick = async () => {
+    const btn = $("#bio_go"), m = $("#bio_msg");
+    m.textContent = ""; btn.textContent = "جارٍ التحقق…";
     try { await bioVerify(); unlocked = true; onSession(lastSession); }
-    catch(e) { $("#bio_msg").textContent = e.name === "NotAllowedError" ? "لم يتم التحقق. حاول مرة أخرى." : "تعذّر التحقق: " + (e.message || e.name); }
+    catch(e) {
+      if (!$("#bio_go") || (e.name === "AbortError" && bioAbort)) return; // replaced by a newer tap
+      btn.textContent = "فتح بالبصمة / Face ID";
+      m.textContent = e.name === "AbortError" ? "انتهت المهلة. اضغط مرة أخرى." : e.name === "NotAllowedError" ? "لم يتم التحقق. اضغط مرة أخرى." : "تعذّر التحقق: " + (e.message || e.name);
+    }
   };
   $("#bio_pw").onclick = () => sb.auth.signOut();
 }
