@@ -101,6 +101,7 @@ td.n,th.n{text-align:end;white-space:nowrap}
 .head{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px;align-items:flex-start}
 .pill{display:inline-block;font-size:12px;padding:1px 10px;border-radius:99px;font-weight:600;white-space:nowrap}
 .pill.ok{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.pill.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
 .pill.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
 .empty{padding:24px;text-align:center;color:var(--muted)}
 .banner{background:var(--brass-soft);border-radius:8px;padding:10px 14px;font-size:14px}
@@ -354,7 +355,7 @@ views.balances = () => {
     return `<button type="button" class="pcard" data-acc="${esc(a.id)}">
       <span class="pname">${esc(a.name)} <small class="hint">${esc(a.country)}</small></span>
       <span class="pusd ${sideCls(u)}"><span class="num">${fmt(Math.abs(u))} USD</span> <small>${side(u) || "متوازن"}</small></span>
-      <span class="chips">${cs.map(([c,v]) => `<span class="chip" data-cur="${esc(c)}"><span class="num">${fmtBal(v)} ${esc(c)}</span> ${side(v)}</span>`).join("") || `<span class="hint">لا توجد حركات</span>`}</span>
+      <span class="chips">${cs.map(([c,v]) => `<span class="chip" data-cur="${esc(c)}"><span class="num">${fmtBal(v)} ${esc(c)}</span> ${side(v)}</span>`).join("") || `<span class="hint">${b[a.id] ? "الحساب مسدّد" : "لا توجد حركات"}</span>`}</span>
     </button>`; };
   $("#app").innerHTML = `${needAccounts()}
   <h1>الأرصدة</h1>
@@ -382,17 +383,17 @@ views.transfer = () => {
   <form class="card" id="tf" novalidate>
     <div class="grid">
       <label>التاريخ<input type="date" id="t_date" value="${today()}"></label>
-      <label>من حساب<select id="t_from">${accOpts("")}</select></label>
+      <label>الوسيط (الحساب الذي سلّمته المبلغ)<select id="t_from">${accOpts("")}</select></label>
       <label>دولة المصدر (التي خرجت منها الحوالة)<select id="t_country"><option value="">اختر الدولة</option>${settings.countries.map(c=>`<option>${esc(c)}</option>`).join("")}</select></label>
-      <label>الرصيد الحالي<input id="t_bal" readonly tabindex="-1"></label>
+      <label>رصيدك الحالي عند الوسيط<input id="t_bal" readonly tabindex="-1"></label>
     </div>
     <div class="grid">
       <label>المبلغ والعملة<span class="pair"><input id="t_amt" inputmode="numeric" placeholder="0"><select id="t_cur">${curOpts("USD")}</select></span></label>
-      <label>عملة الاستلام<select id="t_tocur">${curOpts("USD")}</select></label>
+      <label>عملة التسليم للمستفيد<select id="t_tocur">${curOpts("USD")}</select></label>
       <label><span id="t_ratelbl">سعر الصرف (قابل للتعديل)</span><input id="t_rate" inputmode="decimal"><span class="hint" id="t_ratehint"></span></label>
     </div>
     <div class="grid">
-      <label>إلى حساب<select id="t_to">${accOpts("")}</select></label>
+      <label>المستفيد (الاسم ومكان التسليم)<input id="t_ben" maxlength="120" placeholder="مثلاً: أم أحمد الخياط، الشارقة"></label>
       <label>نسبة العمولة %<input id="t_fee" inputmode="decimal" placeholder="0"></label>
     </div>
     <label>سبب التحويل<select id="t_reason">${reasonOpts()}</select></label>
@@ -423,8 +424,9 @@ views.transfer = () => {
     if (!(amt > 0)) { f("t_sum").innerHTML = `<span>أدخل المبلغ لعرض الحساب</span><span></span>`; return; }
     const c = compute(amt, fee||0, rate||0);
     f("t_sum").innerHTML = `<span>العمولة ${esc(fee||0)}%</span><span class="num">${fmt(c.fee)} ${esc(cur)}</span>
-      <span>يُخصم من المرسل</span><span class="num big">${fmt(c.fromTotal)} ${esc(cur)}</span>
-      <span>يصل إلى المستلم</span><span class="num big">${fmt(c.toAmt)} ${esc(to)}</span>`;
+      <span>المبلغ المسلَّم للوسيط (لنا)</span><span class="num">${fmt(c.fromTotal)} ${esc(cur)}</span>
+      <span>يسلّمه الوسيط للمستفيد</span><span class="num big">${fmt(c.toAmt)} ${esc(to)}</span>
+      <span>رصيدك عنده بعد هذه الحوالة</span><span class="num big">${fmt(Math.abs(r2(bal - c.sendAmt)))} ${esc(cur)} ${side(r2(bal - c.sendAmt))}</span>`;
   };
   ["t_amt","t_fee","t_from"].forEach(id => f(id).addEventListener("input", calc));
   f("t_rate").addEventListener("input", () => { rateTouched = true; calc(); });
@@ -434,28 +436,27 @@ views.transfer = () => {
   f("tf").onsubmit = async e => {
     e.preventDefault(); f("t_err").textContent = ""; f("t_ok").textContent = "";
     const amt = r5(f("t_amt").value.replace(/,/g,"")), rate = effRate(), fee = +f("t_fee").value, rateTxt = f("t_rate").value.trim();
-    const from = f("t_from").value, to = f("t_to").value, cur = f("t_cur").value, tocur = f("t_tocur").value;
+    const from = f("t_from").value, ben = f("t_ben").value.trim(), cur = f("t_cur").value, tocur = f("t_tocur").value;
     const errs = [];
-    if (!from) errs.push("اختر الحساب المرسل");
-    if (!to) errs.push("اختر الحساب المستلم");
-    if (from && from === to && cur === tocur) errs.push("الحساب المرسل والمستلم هما الحساب نفسه بالعملة نفسها");
+    if (!from) errs.push("اختر الوسيط");
+    if (!ben) errs.push("أدخل اسم المستفيد");
     if (!(amt > 0)) errs.push("المبلغ يجب أن يكون أكبر من الصفر");
     if (!(rate > 0)) errs.push("سعر الصرف يجب أن يكون أكبر من الصفر");
     if (!(fee >= 0 && fee < 100)) errs.push("نسبة العمولة بين 0 و 100");
     if (!f("t_date").value) errs.push("اختر التاريخ");
     if (errs.length) { f("t_err").textContent = errs.join(" · "); return; }
     const c = compute(amt, fee, rate), note = withReason("t");
-    const desc = `حوالة ${fmt(amt)} ${cur}` + (cur!==tocur ? ` على سعر ${rateTxt} = ${fmt(c.toAmt)} ${tocur}` : "") + ` إلى ${accName(to)}`;
-    const entries = [
-      {acc:from, cur, debit:c.sendAmt, credit:0, kind:"حوالة", desc: desc + (note?" · "+note:""), recon:""},
-      {acc:to, cur:tocur, debit:0, credit:c.toAmt, kind:"حوالة", desc:`حوالة واردة من ${accName(from)}: ${fmt(amt)} ${cur}` + (cur!==tocur?` على سعر ${rateTxt}`:"") + (note?" · "+note:""), recon:""}
-    ];
-    if (c.fee > 0) entries.splice(1, 0, {acc:from, cur, debit:c.fee, credit:0, kind:"عمولة", fee:true, desc:`عمولة ${fee}% ${desc}`, recon:""});
+    // Agent model (owner's rule): everything posts on the agent's account. Amount handed over = لنا, agent's commission = علينا,
+    // so the balance with the agent is what he still has to deliver. The beneficiary is a name, not an account.
+    const payout = `${fmt(c.sendAmt)} ${cur}` + (cur!==tocur ? ` على سعر ${rateTxt} = ${fmt(c.toAmt)} ${tocur}` : "");
+    const desc = `مبلغ ${fmt(c.fromTotal)} ${cur} مسلَّم لتحويله إلى ${ben}، يُسلَّم ${payout}`;
+    const entries = [{acc:from, cur, debit:c.fromTotal, credit:0, kind:"حوالة", desc: desc + (note?" · "+note:""), recon:""}];
+    if (c.fee > 0) entries.push({acc:from, cur, debit:0, credit:c.fee, kind:"عمولة", fee:true, desc:`عمولة الوسيط ${fee}% على حوالة ${ben}`, recon:""});
     stampUsd(entries, cur === tocur ? {[cur]:usdRateOf(cur)} : pairUsdRates(cur, tocur, rate));
     const op = {reason:$("#t_reason").value, type:"transfer", date:f("t_date").value, createdAt:Date.now(), status:"active", note, country:f("t_country").value,
-      amount:amt, cur, tocur, rate, rateTxt, feePct:fee, feeAmt:c.fee, feeMode:settings.feeMode, from, to, entries};
+      amount:amt, cur, tocur, rate, rateTxt, feePct:fee, feeAmt:c.fee, feeMode:settings.feeMode, from, beneficiary:ben, payout:c.sendAmt, payoutTo:c.toAmt, delivered:false, entries};
     const btn = f("tf").querySelector("button[type=submit]"); btn.disabled = true;
-    try { await saveOp(op); f("t_ok").textContent = `حُفظت الحوالة #${op.no}`; f("t_amt").value = ""; f("t_note").value = ""; f("t_reason").value = ""; calc(); }
+    try { await saveOp(op); f("t_ok").textContent = `حُفظت الحوالة #${op.no}`; f("t_amt").value = ""; f("t_note").value = ""; f("t_reason").value = ""; f("t_ben").value = ""; calc(); }
     catch(err) { f("t_err").textContent = "تعذّر الحفظ: " + (err.message || err.code || "خطأ"); }
     finally { btn.disabled = readOnly; }
   };
@@ -599,7 +600,7 @@ views.statement = () => {
     return `<tr class="c${colour[e.op.no]}${first?" gs":""}${sel}" data-no="${e.op.no}" tabindex="0">
       <td>${first?`<span class="gid">#${e.op.no}</span>`:""}</td>
       <td class="num">${esc(e.op.date)}</td>
-      <td><span class="kind">${esc(e.kind)}</span>${esc(e.desc)}${cancelled && first?` <span class="pill bad">ملغاة</span>`:""}</td>
+      <td><span class="kind">${esc(e.kind)}</span>${esc(e.desc)}${cancelled && first?` <span class="pill bad">ملغاة</span>`:""}${first && !cancelled && e.op.beneficiary ? (e.op.delivered ? ` <span class="pill ok">سُلّمت</span>` : ` <span class="pill warn">بانتظار التسليم</span>`) : ""}</td>
       <td class="n num">${fmt(e.debit||0)}</td><td class="n num">${fmt(e.credit||0)}</td>
       <td class="n num ${sideCls(e.bal)}">${fmtBal(e.bal)}</td>
       <td><button type="button" class="dot ${esc(e.recon||"")}" data-no="${e.op.no}" data-idx="${e.idx}" title="${RECON_LBL[e.recon||""]} · اضغط للتغيير" aria-label="حالة المطابقة: ${RECON_LBL[e.recon||""]}" ${readOnly?"disabled":""}></button></td>
@@ -625,7 +626,7 @@ views.statement = () => {
     <div class="scroll"><table class="st" style="min-width:820px">
       <thead><tr><th>العملية</th><th>التاريخ</th><th>البيان</th><th class="n">مدين / لنا</th><th class="n">دائن / علينا</th><th class="n">الرصيد</th><th>الحالة</th></tr></thead>
       <tbody>
-        <tr><td></td><td class="num">${esc(ui.stFrom||"")}</td><td>رصيد سابق</td><td class="n num">0.00</td><td class="n num">0.00</td><td class="n num ${sideCls(pre)}">${fmtBal(pre)}</td><td></td></tr>
+        <tr><td></td><td class="num">${esc(ui.stFrom||"")}</td><td>رصيد سابق</td><td class="n num">0</td><td class="n num">0</td><td class="n num ${sideCls(pre)}">${fmtBal(pre)}</td><td></td></tr>
         ${body || `<tr><td colspan="7" class="empty">لا توجد حركات بهذه العملة ضمن الفترة المحددة</td></tr>`}
       </tbody>
       <tfoot><tr><td colspan="3">المجموع · <span class="num">${shown.length}</span> سجل</td><td class="n num">${fmt(sumD)}</td><td class="n num">${fmt(sumC)}</td><td class="n num ${sideCls(finalBal)}">${fmtBal(finalBal)}</td><td></td></tr></tfoot>
@@ -635,6 +636,7 @@ views.statement = () => {
       <div class="btns">
         <span class="hint">${selOp?`العملية المحددة #${selOp.no}`:"اضغط على سطر لتحديد عمليته"}</span>
         ${selOp ? ["ok","audit","err"].map(r => `<button type="button" data-recall="${r}" ${readOnly?"disabled":""}><span class="dot ${r}"></span> ${RECON_LBL[r]}</button>`).join("") : ""}
+        ${selOp && selOp.status !== "cancelled" && selOp.beneficiary && !selOp.delivered ? `<button type="button" class="p" id="s_deliver" ${readOnly?"disabled":""}>تم التسليم لـ ${esc(selOp.beneficiary)}</button>` : ""}
         ${selOp && selOp.status !== "cancelled" ? `<button type="button" class="d" id="s_cancel" ${readOnly?"disabled":""}>إلغاء العملية</button>` : ""}
         <button type="button" id="s_dl">تنزيل الكشف (Excel)</button>
       </div>
@@ -663,6 +665,11 @@ views.statement = () => {
     await updateOp(selOp, {entries});
   });
   if ($("#s_cancel")) $("#s_cancel").onclick = () => openCancel(selOp);
+  if ($("#s_deliver")) $("#s_deliver").onclick = async () => {
+    const o = selOp, first = o.entries[0];
+    const done = {acc:o.from, cur:o.cur, ur:first.ur, debit:0, credit:o.payout, kind:"تسليم", desc:`سُلّمت إلى ${o.beneficiary}: ${fmt(o.payout)} ${o.cur}` + (o.tocur && o.tocur !== o.cur ? ` = ${fmt(o.payoutTo)} ${o.tocur}` : ""), recon:""};
+    await updateOp(o, {delivered:true, deliveredAt:Date.now(), entries:[...o.entries, done]});
+  };
   $("#s_dl").onclick = () => downloadCsv(acc, cur, pre, shown, sumD, sumC, finalBal);
 };
 async function updateOp(op, patch) {
@@ -755,17 +762,17 @@ $("#cancelGo").onclick = async () => {
 views.log = () => {
   const q = ui.logQ.trim();
   const list = ops.slice().sort((a,b) => (b.date||"").localeCompare(a.date||"") || b.no - a.no)
-    .filter(o => (!ui.logType || o.type === ui.logType) && (!q || (o.note||"").includes(q) || String(o.no) === q || accName(o.from).includes(q) || (o.to && accName(o.to).includes(q))));
+    .filter(o => (!ui.logType || o.type === ui.logType) && (!q || (o.note||"").includes(q) || (o.beneficiary||"").includes(q) || String(o.no) === q || accName(o.from).includes(q) || (o.to && accName(o.to).includes(q))));
   $("#app").innerHTML = `<h1>سجل العمليات</h1>
   <div class="card">
     <label>بحث بالملاحظة أو الاسم أو رقم العملية<input id="l_q" value="${esc(ui.logQ)}" placeholder="مثلاً: منزل"></label>
     <div class="chips"><button type="button" class="chip${!ui.logType?" on":""}" data-t="">الكل</button>${Object.entries(TYPE_LBL).map(([k,v]) => `<button type="button" class="chip${ui.logType===k?" on":""}" data-t="${k}">${v}</button>`).join("")}</div>
     <div class="scroll"><table style="min-width:760px"><thead><tr><th>#</th><th>التاريخ</th><th>النوع</th><th>من ← إلى</th><th class="n">المبلغ</th><th class="n">العمولة</th><th>الملاحظات</th><th>الحالة</th><th></th></tr></thead><tbody>
     ${list.map(o => `<tr><td class="num">${o.no}</td><td class="num">${esc(o.date)}</td><td>${esc(TYPE_LBL[o.type]||o.type)}</td>
-      <td>${esc(accName(o.from))}${o.to?" ← "+esc(accName(o.to)):""}${o.country?` <span class="hint">(${esc(o.country)})</span>`:""}</td>
+      <td>${esc(accName(o.from))}${o.to?" ← "+esc(accName(o.to)):""}${o.beneficiary?" ← "+esc(o.beneficiary):""}${o.country?` <span class="hint">(${esc(o.country)})</span>`:""}</td>
       <td class="n num">${fmt(o.amount||0)} ${esc(o.cur||"")}${o.tocur && o.tocur!==o.cur?` → ${esc(o.tocur)} @ ${esc(o.rateTxt || fmtRate(o.rate))}`:""}</td>
       <td class="n num">${o.feePct?esc(o.feePct)+"%":"—"}</td><td>${esc(o.note||"")}</td>
-      <td>${o.status==="cancelled"?`<span class="pill bad">ملغاة${o.feeRefunded?" · رُدّت العمولة":o.feeAmt?" · بدون رد العمولة":""}</span>`:`<span class="pill ok">منفّذة</span>`}</td>
+      <td>${o.status==="cancelled"?`<span class="pill bad">ملغاة${o.feeRefunded?" · رُدّت العمولة":o.feeAmt?" · بدون رد العمولة":""}</span>`:o.beneficiary && !o.delivered ? `<span class="pill warn">بانتظار التسليم</span>` : `<span class="pill ok">${o.beneficiary ? "سُلّمت" : "منفّذة"}</span>`}</td>
       <td><button type="button" data-open="${o.no}">الكشف</button></td></tr>`).join("") || `<tr><td colspan="9" class="empty">لا توجد عمليات</td></tr>`}
     </tbody></table></div><div class="err" id="l_err"></div>
   </div>`;
