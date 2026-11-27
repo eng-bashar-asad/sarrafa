@@ -2,13 +2,13 @@
 <html lang="ar" dir="rtl"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>صرافة بشار</title>
+<title>TransMind</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#cfe5f6">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<meta name="apple-mobile-web-app-title" content="صرافة">
+<meta name="apple-mobile-web-app-title" content="TransMind">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="icon" href="icon-192.png">
 <script>try{const t=localStorage.getItem("theme");if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -159,7 +159,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><circle cx="12" cy="12" r="8.3" fill="none" stroke="#8a6212" stroke-opacity=".55" stroke-width="1"/><path fill="#7a5410" fill-opacity=".85" d="M12.9 5.5v1.4c1.6.2 2.8 1 3.3 2.4l-1.9.8c-.3-.8-1-1.3-2-1.3-1.1 0-1.7.5-1.7 1.1 0 .7.6 1 2.1 1.4 2.2.6 3.7 1.3 3.7 3.4 0 1.6-1.2 2.8-3.5 3v1.4h-1.8v-1.4c-1.9-.2-3.2-1.2-3.6-2.8l2-.7c.3 1 1.1 1.6 2.4 1.6 1.2 0 1.9-.5 1.9-1.2 0-.8-.7-1.1-2.3-1.5-2-.5-3.5-1.2-3.5-3.2 0-1.5 1.1-2.6 3.1-2.9V5.5h1.8z"/></symbol>
 </svg>
 <header class="top">
-  <div class="top-row"><button type="button" id="homeBtn" class="homebtn" hidden><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>الرئيسية</button><span class="brand"><svg class="ic coin" aria-hidden="true"><use href="#i-coin"/></svg> صرافة · الحوالات والأرصدة</span><span><span class="status" id="status">جارِ تحميل البيانات…</span> <button type="button" id="logout" hidden style="padding:2px 10px;font-size:12px">خروج</button></span></div>
+  <div class="top-row"><button type="button" id="homeBtn" class="homebtn" hidden><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>الرئيسية</button><span class="brand"><svg class="ic coin" aria-hidden="true"><use href="#i-coin"/></svg> <bdi>TransMind</bdi> · الحوالات والأرصدة</span><span><span class="status" id="status">جارِ تحميل البيانات…</span> <button type="button" id="logout" hidden style="padding:2px 10px;font-size:12px">خروج</button></span></div>
 </header>
 <main id="app"><div class="empty">جارِ تحميل البيانات…</div></main>
 
@@ -975,7 +975,7 @@ const unb64u = t => Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")),
 const bioSupported = async () => !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable().catch(() => false));
 async function bioRegister() {
   const c = await navigator.credentials.create({publicKey:{
-    challenge:crypto.getRandomValues(new Uint8Array(32)), rp:{name:"صرافة"},
+    challenge:crypto.getRandomValues(new Uint8Array(32)), rp:{name:"TransMind"},
     user:{id:new TextEncoder().encode(me.id), name:me.email || "user", displayName:me.email || "user"},
     pubKeyCredParams:[{type:"public-key", alg:-7}, {type:"public-key", alg:-257}],
     authenticatorSelection:{authenticatorAttachment:"platform", userVerification:"required", residentKey:"discouraged"}, timeout:60000}});
