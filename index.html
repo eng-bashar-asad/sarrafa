@@ -14,7 +14,6 @@
 <script src="vendor/supabase.js"></script>
 <script src="config.js"></script>
 <style>:root{box-sizing:border-box}body{margin:0;font:14px sans-serif}[hidden]{display:none!important}</style>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=Reem+Kufi:wght@500;700&family=IBM+Plex+Mono:wght@500&display=swap">
 <style>
 /* Layout: app shell — top bar with tabs, one working panel at a time (RTL) */
 :root{
@@ -24,9 +23,9 @@
   --top:#cfe5f6; --top-ink:#173f63;
   --ok:#1f7a3f; --warn:#a36200; --bad:#b3261e; --info:#2456c7;
   --g1:#e1eefa; --g2:#e9ecef; --g3:#dcf1f5; --g4:#e7e8f4; --sel:#fff0b3;
-  --f-display:"Reem Kufi","IBM Plex Sans Arabic",Tahoma,sans-serif;
-  --f-body:"IBM Plex Sans Arabic",Tahoma,"Segoe UI",sans-serif;
-  --f-num:"IBM Plex Mono",ui-monospace,monospace;
+  --f-body:"Times New Roman",Times,serif;
+  --f-display:var(--f-body);
+  --f-num:var(--f-body);
   color-scheme:light;
 }
 *,*::before,*::after{box-sizing:border-box}
@@ -141,8 +140,8 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 
 <dialog id="reasonDlg">
   <form method="dialog" id="reasonForm" style="display:flex;flex-direction:column;gap:12px" novalidate>
-    <h2>إضافة سبب تحويل</h2>
-    <label>السبب<input id="nr_name" maxlength="60" placeholder="مثلاً: قسط سيارة"></label>
+    <h2 id="nr_title">إضافة سبب تحويل</h2>
+    <label><span id="nr_lbl">السبب</span><input id="nr_name" maxlength="80"></label>
     <div class="err" id="nr_err" role="alert"></div>
     <div class="btns"><button type="submit" class="p" id="nr_go">إضافة</button><button type="button" id="nr_close">رجوع</button></div>
   </form>
@@ -221,15 +220,25 @@ const NEW_ACC = "__new";
 const accOpts = (sel, blank="اختر حساباً", canAdd=true) => `<option value="">${blank}</option>` + accounts.slice().sort((a,b)=>a.name.localeCompare(b.name,"ar")).map(a => `<option value="${esc(a.id)}"${a.id===sel?" selected":""}>${esc(a.name)} · ${esc(a.country)}${KIND_LBL[a.kind] ? " · " + KIND_LBL[a.kind] : ""}</option>`).join("")
   + (canAdd && !readOnly ? `<option value="${NEW_ACC}">＋ إضافة حساب جديد…</option>` : "");
 // ----- transfer reasons (saved list in settings, "add new" inside the picker) -----
-const NEW_REASON = "__newreason";
-const reasonOpts = (sel = "") => `<option value="">بدون سبب</option>` + (settings.reasons || []).map(r => `<option${r===sel?" selected":""}>${esc(r)}</option>`).join("")
-  + (readOnly ? "" : `<option value="${NEW_REASON}">＋ إضافة سبب جديد…</option>`);
+// Same pattern for beneficiaries and delivery places: saved text lists, not ledger accounts.
+const LISTS = {
+  reasons: {empty:"بدون سبب", add:"إضافة سبب جديد", title:"إضافة سبب تحويل", lbl:"السبب", ph:"مثلاً: قسط سيارة"},
+  bens:    {empty:"اختر المستفيد", add:"إضافة مستفيد جديد", title:"إضافة مستفيد", lbl:"اسم المستفيد", ph:"مثلاً: أحمد الخياط"},
+  places:  {empty:"اختر مكان التسليم", add:"إضافة مكان جديد", title:"إضافة مكان تسليم", lbl:"مكان التسليم", ph:"مثلاً: الشارقة"},
+};
+const NEW_ITEM = "__newitem";
+const listOpts = (key, sel = "") => `<option value="">${LISTS[key].empty}</option>` + (settings[key] || []).map(r => `<option${r===sel?" selected":""}>${esc(r)}</option>`).join("")
+  + (readOnly ? "" : `<option value="${NEW_ITEM}">＋ ${LISTS[key].add}…</option>`);
+const listSel = (id, key) => `<select id="${id}" data-list="${key}">${listOpts(key)}</select>`;
+const reasonOpts = () => listOpts("reasons");
 const withReason = k => { const r = $("#" + k + "_reason").value, n = $("#" + k + "_note").value.trim(); return [r && "السبب: " + r, n].filter(Boolean).join(" · "); };
 let reasonTarget = null;
 document.addEventListener("change", e => {
   const sel = e.target;
-  if (!(sel instanceof HTMLSelectElement) || sel.value !== NEW_REASON) return;
+  if (!(sel instanceof HTMLSelectElement) || sel.value !== NEW_ITEM) return;
   e.stopImmediatePropagation(); sel.value = ""; reasonTarget = sel;
+  const L = LISTS[sel.dataset.list || "reasons"];
+  $("#nr_title").textContent = L.title; $("#nr_lbl").textContent = L.lbl; $("#nr_name").placeholder = L.ph;
   $("#nr_name").value = ""; $("#nr_err").textContent = ""; $("#reasonDlg").showModal(); $("#nr_name").focus();
 }, true);
 
@@ -287,6 +296,11 @@ function allEntries() {
   for (const o of ops) (o.entries||[]).forEach((e, i) => out.push({...e, op:o, idx:i}));
   return out;
 }
+// A cancelled op whose reversal fully nets out (fee refunded, or no fee) is hidden by default; it changes no balance.
+// ponytail: hidden, not deleted (ops delete is revoked in the DB to keep an audit trail). Upgrade: a guarded delete RPC.
+const hiddenOp = o => !ui.showCancelled && o.status === "cancelled" && (o.feeRefunded || !o.feeAmt);
+const cancelToggle = () => ops.some(o => o.status === "cancelled" && (o.feeRefunded || !o.feeAmt)) ? `<label class="hint" style="flex-direction:row;align-items:center;gap:6px"><input type="checkbox" id="showCx" ${ui.showCancelled?"checked":""} style="width:auto"> إظهار العمليات الملغاة</label>` : "";
+document.addEventListener("change", e => { if (e.target.id === "showCx") { ui.showCancelled = e.target.checked; saveUi(); route(true); } });
 function balances() { // {accId:{cur:balance}} balance = credit(علينا) - debit(لنا)
   const b = {};
   for (const o of ops) for (const e of (o.entries||[])) {
@@ -393,7 +407,8 @@ views.transfer = () => {
       <label><span id="t_ratelbl">سعر الصرف (قابل للتعديل)</span><input id="t_rate" inputmode="decimal"><span class="hint" id="t_ratehint"></span></label>
     </div>
     <div class="grid">
-      <label>المستفيد (الاسم ومكان التسليم)<input id="t_ben" maxlength="120" placeholder="مثلاً: أحمد الخياط، الشارقة"></label>
+      <label>المستفيد${listSel("t_ben","bens")}</label>
+      <label>مكان التسليم${listSel("t_place","places")}</label>
       <label>نسبة العمولة %<input id="t_fee" inputmode="decimal" placeholder="0"></label>
     </div>
     <label>سبب التحويل<select id="t_reason">${reasonOpts()}</select></label>
@@ -436,10 +451,10 @@ views.transfer = () => {
   f("tf").onsubmit = async e => {
     e.preventDefault(); f("t_err").textContent = ""; f("t_ok").textContent = "";
     const amt = r5(f("t_amt").value.replace(/,/g,"")), rate = effRate(), fee = +f("t_fee").value, rateTxt = f("t_rate").value.trim();
-    const from = f("t_from").value, ben = f("t_ben").value.trim(), cur = f("t_cur").value, tocur = f("t_tocur").value;
+    const from = f("t_from").value, benName = f("t_ben").value, place = f("t_place").value, ben = [benName, place].filter(Boolean).join("، "), cur = f("t_cur").value, tocur = f("t_tocur").value;
     const errs = [];
     if (!from) errs.push("اختر الوسيط");
-    if (!ben) errs.push("أدخل اسم المستفيد");
+    if (!benName) errs.push("اختر المستفيد");
     if (!(amt > 0)) errs.push("المبلغ يجب أن يكون أكبر من الصفر");
     if (!(rate > 0)) errs.push("سعر الصرف يجب أن يكون أكبر من الصفر");
     if (!(fee >= 0 && fee < 100)) errs.push("نسبة العمولة بين 0 و 100");
@@ -454,9 +469,9 @@ views.transfer = () => {
     if (c.fee > 0) entries.push({acc:from, cur, debit:0, credit:c.fee, kind:"عمولة", fee:true, desc:`عمولة الوسيط ${fee}% على حوالة ${ben}`, recon:""});
     stampUsd(entries, cur === tocur ? {[cur]:usdRateOf(cur)} : pairUsdRates(cur, tocur, rate));
     const op = {reason:$("#t_reason").value, type:"transfer", date:f("t_date").value, createdAt:Date.now(), status:"active", note, country:f("t_country").value,
-      amount:amt, cur, tocur, rate, rateTxt, feePct:fee, feeAmt:c.fee, feeMode:settings.feeMode, from, beneficiary:ben, payout:c.sendAmt, payoutTo:c.toAmt, delivered:false, entries};
+      amount:amt, cur, tocur, rate, rateTxt, feePct:fee, feeAmt:c.fee, feeMode:settings.feeMode, from, beneficiary:ben, benName, place, payout:c.sendAmt, payoutTo:c.toAmt, delivered:false, entries};
     const btn = f("tf").querySelector("button[type=submit]"); btn.disabled = true;
-    try { await saveOp(op); f("t_ok").textContent = `حُفظت الحوالة #${op.no}`; f("t_amt").value = ""; f("t_note").value = ""; f("t_reason").value = ""; f("t_ben").value = ""; calc(); }
+    try { await saveOp(op); f("t_ok").textContent = `حُفظت الحوالة #${op.no}`; f("t_amt").value = ""; f("t_note").value = ""; f("t_reason").value = ""; f("t_ben").value = ""; f("t_place").value = ""; calc(); }
     catch(err) { f("t_err").textContent = "تعذّر الحفظ: " + (err.message || err.code || "خطأ"); }
     finally { btn.disabled = readOnly; }
   };
@@ -580,7 +595,7 @@ views.statement = () => {
   saveUi();
   const acc = accounts.find(a => a.id === ui.stAcc), cur = ui.stCur;
   // rows for this account+currency, oldest first
-  let rows = allEntries().filter(e => e.acc === ui.stAcc && e.cur === cur)
+  let rows = allEntries().filter(e => e.acc === ui.stAcc && e.cur === cur && !hiddenOp(e.op))
     .sort((x,y) => (x.op.date||"").localeCompare(y.op.date||"") || (x.op.no-y.op.no) || (x.idx-y.idx));
   let pre = 0;
   const inRange = e => (!ui.stFrom || e.op.date >= ui.stFrom) && (!ui.stTo || e.op.date <= ui.stTo);
@@ -625,6 +640,7 @@ views.statement = () => {
       <label>بحث بالبيان أو المبلغ أو رقم العملية<input id="s_q" value="${esc(ui.stQ)}"></label>
     </div>
     <div class="chips"><button type="button" class="chip${!ui.stType?" on":""}" data-kind="">الكل <span class="num">${rows.length}</span></button>${Object.entries(kinds).map(([k,n]) => `<button type="button" class="chip${ui.stType===k?" on":""}" data-kind="${esc(k)}">${esc(k)} <span class="num">${n}</span></button>`).join("")}</div>
+    ${cancelToggle()}
     <div class="scroll"><table class="st" style="min-width:820px">
       <thead><tr><th>العملية</th><th>التاريخ</th><th>البيان</th><th class="n">مدين / لنا</th><th class="n">دائن / علينا</th><th class="n">الرصيد</th><th>الحالة</th></tr></thead>
       <tbody>
@@ -698,16 +714,16 @@ async function downloadCsv(acc, cur, pre, rows, sumD, sumC, fin) {
 $("#nr_close").onclick = () => $("#reasonDlg").close();
 $("#reasonForm").onsubmit = async e => {
   e.preventDefault();
-  const r = $("#nr_name").value.trim(), list = settings.reasons || [];
-  if (!r) { $("#nr_err").textContent = "أدخل السبب"; return; }
+  const key = reasonTarget?.dataset.list || "reasons", r = $("#nr_name").value.trim(), list = settings[key] || [];
+  if (!r) { $("#nr_err").textContent = "أدخل " + LISTS[key].lbl; return; }
   $("#nr_go").disabled = true;
   try {
     if (!list.includes(r)) {
-      const next = {...settings, reasons:[...list, r]};
+      const next = {...settings, [key]:[...list, r]};
       must(await sb.from("settings").upsert({owner:me.id, data:next}));
       settings = next;
     }
-    document.querySelectorAll("select").forEach(sel => { if (!sel.querySelector(`option[value="${NEW_REASON}"]`)) return; const v = sel.value; sel.innerHTML = reasonOpts(v); });
+    document.querySelectorAll("select").forEach(sel => { if (!sel.querySelector(`option[value="${NEW_ITEM}"]`) || (sel.dataset.list || "reasons") !== key) return; const v = sel.value; sel.innerHTML = listOpts(key, v); });
     if (reasonTarget) reasonTarget.value = r;
     $("#reasonDlg").close();
   } catch(err) { $("#nr_err").textContent = "تعذّر الحفظ: " + (err.message || err.code); }
@@ -765,11 +781,12 @@ $("#cancelGo").onclick = async () => {
 views.log = () => {
   const q = ui.logQ.trim();
   const list = ops.slice().sort((a,b) => (b.date||"").localeCompare(a.date||"") || b.no - a.no)
-    .filter(o => (!ui.logType || o.type === ui.logType) && (!q || (o.note||"").includes(q) || (o.beneficiary||"").includes(q) || String(o.no) === q || accName(o.from).includes(q) || (o.to && accName(o.to).includes(q))));
+    .filter(o => !hiddenOp(o) && (!ui.logType || o.type === ui.logType) && (!q || (o.note||"").includes(q) || (o.beneficiary||"").includes(q) || String(o.no) === q || accName(o.from).includes(q) || (o.to && accName(o.to).includes(q))));
   $("#app").innerHTML = `<h1>سجل العمليات</h1>
   <div class="card">
     <label>بحث بالملاحظة أو الاسم أو رقم العملية<input id="l_q" value="${esc(ui.logQ)}" placeholder="مثلاً: منزل"></label>
     <div class="chips"><button type="button" class="chip${!ui.logType?" on":""}" data-t="">الكل</button>${Object.entries(TYPE_LBL).map(([k,v]) => `<button type="button" class="chip${ui.logType===k?" on":""}" data-t="${k}">${v}</button>`).join("")}</div>
+    ${cancelToggle()}
     <div class="scroll"><table style="min-width:760px"><thead><tr><th>#</th><th>التاريخ</th><th>النوع</th><th>من ← إلى</th><th class="n">المبلغ</th><th class="n">العمولة</th><th>الملاحظات</th><th>الحالة</th><th></th></tr></thead><tbody>
     ${list.map(o => `<tr><td class="num">${o.no}</td><td class="num">${esc(o.date)}</td><td>${esc(TYPE_LBL[o.type]||o.type)}</td>
       <td>${esc(accName(o.from))}${o.to?" ← "+esc(accName(o.to)):""}${o.beneficiary?" ← "+esc(o.beneficiary):""}${o.country?` <span class="hint">(${esc(o.country)})</span>`:""}</td>
@@ -855,7 +872,7 @@ views.rates = () => {
     if (bad.length) { $("#r_err").textContent = "سعر غير صالح: " + bad.join("، "); return; }
     if (!countries.length) { $("#r_err").textContent = "أدخل دولة واحدة على الأقل"; return; }
     const reasons = [...new Set($("#r_reasons").value.split(/[,،]/).map(x => x.trim()).filter(Boolean))];
-    const next = {currencies, countries, reasons, usdRates, feeMode:$("#r_fee").value, cutBothLegs:$("#r_cut").checked, ratesUpdated:Date.now()};
+    const next = {...settings, currencies, countries, reasons, usdRates, feeMode:$("#r_fee").value, cutBothLegs:$("#r_cut").checked, ratesUpdated:Date.now()};
     try { must(await sb.from("settings").upsert({owner:me.id, data:next})); await loadAll(); $("#r_ok").textContent = "تم الحفظ"; }
     catch(err) { $("#r_err").textContent = "تعذّر الحفظ: " + (err.message || err.code); }
   };
