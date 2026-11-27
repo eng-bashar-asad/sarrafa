@@ -185,7 +185,7 @@ const DEFAULT_SETTINGS = {
 const CUR_NAMES = {USD:"دولار أمريكي",AED:"درهم إماراتي",EGP:"جنيه مصري",EUR:"يورو",SYP:"ليرة سورية"};
 const RECON = ["", "ok", "audit", "err"];
 const RECON_LBL = {"":"بدون", ok:"مطابقة نهائية", audit:"تدقيق", err:"خطأ"};
-const TYPE_LBL = {transfer:"حوالة", deposit:"إيداع نقدي", withdraw:"سحب نقدي", cover:"تغطية رصيد", settle:"تسوية", cut:"قطع"};
+const TYPE_LBL = {transfer:"حوالة", receipt:"استلام دفعة", deposit:"إيداع نقدي", withdraw:"سحب نقدي", cover:"تغطية رصيد", settle:"تسوية", cut:"قطع"};
 
 // ---------- state ----------
 let sb = null, me = null, accounts = [], ops = [], settings = structuredClone(DEFAULT_SETTINGS);
@@ -474,9 +474,9 @@ views.move = () => {
   <h1>حركة نقدية <span class="num hint">#${nextNo()}</span></h1>
   <form class="card" id="mf" novalidate>
     <div class="grid">
-      <label>نوع الحركة<select id="m_type"><option value="deposit">إيداع نقدي</option><option value="withdraw">سحب / صرف نقدي</option><option value="cover">تغطية رصيد</option><option value="settle">تسوية</option></select></label>
+      <label>نوع الحركة<select id="m_type"><option value="receipt">استلام دفعة من الحساب (قبض)</option><option value="deposit">إيداع نقدي</option><option value="withdraw">سحب / صرف نقدي</option><option value="cover">تغطية رصيد</option><option value="settle">تسوية</option></select></label>
       <label>التاريخ<input type="date" id="m_date" value="${today()}"></label>
-      <label>الحساب<select id="m_acc">${accOpts("")}</select></label>
+      <label>الحساب<select id="m_acc">${accOpts(ui.moveAcc||"")}</select></label>
     </div>
     <div class="grid">
       <label>المبلغ والعملة<span class="pair"><input id="m_amt" inputmode="numeric" placeholder="0"><select id="m_cur">${curOpts("USD")}</select></span></label>
@@ -489,6 +489,8 @@ views.move = () => {
     <div class="btns"><button class="p" type="submit" ${readOnly?"disabled":""}>حفظ الحركة</button><span class="okmsg" id="m_ok"></span></div>
   </form>`;
   const f = id => $("#" + id);
+  if (ui.moveCur) f("m_cur").value = ui.moveCur;
+  ui.moveAcc = ui.moveCur = ""; saveUi();
   f("m_type").onchange = () => { f("m_side").value = f("m_type").value === "withdraw" ? "debit" : "credit"; };
   f("mf").onsubmit = async e => {
     e.preventDefault(); f("m_err").textContent = ""; f("m_ok").textContent = "";
@@ -636,7 +638,8 @@ views.statement = () => {
       <div class="btns">
         <span class="hint">${selOp?`العملية المحددة #${selOp.no}`:"اضغط على سطر لتحديد عمليته"}</span>
         ${selOp ? ["ok","audit","err"].map(r => `<button type="button" data-recall="${r}" ${readOnly?"disabled":""}><span class="dot ${r}"></span> ${RECON_LBL[r]}</button>`).join("") : ""}
-        ${selOp && selOp.status !== "cancelled" && selOp.beneficiary && !selOp.delivered ? `<button type="button" class="p" id="s_deliver" ${readOnly?"disabled":""}>تم التسليم لـ ${esc(selOp.beneficiary)}</button>` : ""}
+        <button type="button" class="p" id="s_receipt" ${readOnly?"disabled":""}>تسجيل دفعة مستلمة من ${esc(acc.name)}</button>
+        ${selOp && selOp.status !== "cancelled" && selOp.beneficiary && !selOp.delivered ? `<button type="button" id="s_deliver" ${readOnly?"disabled":""}>تأكيد تسليم المستفيد ${esc(selOp.beneficiary)}</button>` : ""}
         ${selOp && selOp.status !== "cancelled" ? `<button type="button" class="d" id="s_cancel" ${readOnly?"disabled":""}>إلغاء العملية</button>` : ""}
         <button type="button" id="s_dl">تنزيل الكشف (Excel)</button>
       </div>
@@ -666,10 +669,10 @@ views.statement = () => {
   });
   if ($("#s_cancel")) $("#s_cancel").onclick = () => openCancel(selOp);
   if ($("#s_deliver")) $("#s_deliver").onclick = async () => {
-    const o = selOp, first = o.entries[0];
-    const done = {acc:o.from, cur:o.cur, ur:first.ur, debit:0, credit:o.payout, kind:"تسليم", desc:`سُلّمت إلى ${o.beneficiary}: ${fmt(o.payout)} ${o.cur}` + (o.tocur && o.tocur !== o.cur ? ` = ${fmt(o.payoutTo)} ${o.tocur}` : ""), recon:""};
-    await updateOp(o, {delivered:true, deliveredAt:Date.now(), entries:[...o.entries, done]});
+    // Status only: the agent's balance changes only when a payment is received from him (حركة «استلام دفعة»).
+    await updateOp(selOp, {delivered:true, deliveredAt:Date.now()});
   };
+  $("#s_receipt").onclick = () => { ui.moveAcc = acc.id; ui.moveCur = cur; saveUi(); location.hash = "#move"; };
   $("#s_dl").onclick = () => downloadCsv(acc, cur, pre, shown, sumD, sumC, finalBal);
 };
 async function updateOp(op, patch) {
