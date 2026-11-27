@@ -123,6 +123,19 @@ td.n,th.n{text-align:end;white-space:nowrap}
 .pill.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
 .pill.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
 .empty{padding:24px;text-align:center;color:var(--muted)}
+/* Sign-in and lock screens: logo fills the top half, sign-in options in the bottom half, colours taken from the logo. */
+body.auth{background:#05080f} body.auth .top,body.auth::before{display:none}
+body.auth main{max-width:none;padding:0;gap:0}
+.auth{min-height:100dvh;display:grid;grid-template-rows:50dvh 1fr;background:radial-gradient(circle at 50% 28%,#14243d,#0a1322 55%,#04070d);color:#e9f0f7}
+.auth-logo{display:flex;align-items:center;justify-content:center;overflow:hidden;padding-top:env(safe-area-inset-top,0px)}
+.auth-logo img{width:100%;height:100%;object-fit:cover}
+.auth-panel{background:linear-gradient(180deg,rgba(16,30,50,.92),#05080f);border-top:1px solid #26405f;border-radius:24px 24px 0 0;
+  padding:24px max(20px,env(safe-area-inset-left,0px)) calc(24px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;width:100%;max-width:460px;margin-inline:auto}
+.auth-panel h1{color:#fff;font-size:22px;text-align:center} .auth-panel label{color:#9fb3c8}
+.auth-panel input{background:#0f1d31;border-color:#26405f;color:#e9f0f7}
+.auth-panel button{background:#132238;border-color:#2b4566;color:#e9f0f7;min-height:46px;font-size:16px}
+.auth-panel button.p{background:#2f8fe0;border-color:#2f8fe0;color:#fff}
+.auth-panel .err{color:#ff8a80}
 .banner{background:var(--brass-soft);border-radius:8px;padding:10px 14px;font-size:14px}
 dialog{border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);padding:18px;max-width:min(460px,calc(100vw - 32px));width:100%}
 dialog::backdrop{background:rgba(0,0,0,.4)}
@@ -225,7 +238,7 @@ const r5 = x => Math.round((+x || 0) / 5) * 5;
 console.assert(r5(36039.4) === 36040 && r5(177) === 175 && r5(178) === 180, "r5");
 const fmt = (x, d=0) => (+x).toLocaleString("en-US", {minimumFractionDigits:d, maximumFractionDigits:d});
 const fmtBal = x => { const v = r2(x); return v < 0 ? "(" + fmt(-v) + ")" : fmt(v); };
-const side = x => r2(x) < 0 ? "لنا" : r2(x) > 0 ? "علينا" : "";
+const side = x => r2(x) < 0 ? "عليه" : r2(x) > 0 ? "له" : ""; // per account: عليه = owes us, له = we owe him
 const sideCls = x => r2(x) < 0 ? "lana" : r2(x) > 0 ? "alayna" : "";
 const today = () => new Date().toISOString().slice(0,10);
 const accName = id => { const a = accounts.find(a => a.id === id); return a ? a.name + " · " + a.country : "حساب محذوف"; };
@@ -368,6 +381,8 @@ const views = {};
 const FORMS = new Set(["transfer","move","cut","rates"]);
 let current = null;
 function route(fromData) {
+  if (!me || (bioId() && !unlocked)) return; // sign-in / lock screens stay put
+  document.body.classList.remove("auth");
   const v = (location.hash || "#home").slice(1);
   const name = views[v] ? v : "home";
   $("#homeBtn").hidden = name === "home" || !me;
@@ -409,7 +424,7 @@ views.balances = () => {
   $("#app").innerHTML = `${needAccounts()}
   <h1>الأرصدة</h1>
   <div class="balbox"><small class="hint">مجموع الأرصدة محوّلاً إلى الدولار بأسعار وقت كل عملية</small><strong class="num ${sideCls(total)}">${fmt(Math.abs(total))} USD</strong><span class="pill ${total<0?"ok":total>0?"bad":""}">${total<0?"لنا":total>0?"علينا":"متوازن"}</span></div>
-  <p class="hint">لكل شخص: الرصيد الموحّد بالدولار، وتحته رصيد كل عملة. الرقم بين قوسين = لنا. اضغط على العملة لفتح كشفها.</p>
+  <p class="hint">لكل شخص: الرصيد الموحّد بالدولار، وتحته رصيد كل عملة. «له» = مبلغ مستحق له عندنا، «عليه» = مبلغ مستحق علينا منه، والرقم بين قوسين = عليه. اضغط على العملة لفتح كشفها.</p>
   <div class="plist">${list.map(card).join("")}</div>`;
   document.querySelectorAll(".pcard").forEach(btn => btn.onclick = e => {
     const chip = e.target.closest("[data-cur]");
@@ -432,9 +447,9 @@ views.transfer = () => {
   <form class="card" id="tf" novalidate>
     <div class="grid">
       <label>التاريخ<input type="date" id="t_date" value="${today()}"></label>
-      <label>الوسيط (الحساب الذي سلّمته المبلغ)<select id="t_from">${accOpts("")}</select></label>
+      <label>الوسيط (الذي قبض المبلغ)<select id="t_from">${accOpts("")}</select></label>
       <label>دولة المصدر (التي خرجت منها الحوالة)<select id="t_country"><option value="">اختر الدولة</option>${settings.countries.map(c=>`<option>${esc(c)}</option>`).join("")}</select></label>
-      <label>رصيدك الحالي عند الوسيط<input id="t_bal" readonly tabindex="-1"></label>
+      <label>رصيد الوسيط الحالي<input id="t_bal" readonly tabindex="-1"></label>
     </div>
     <div class="grid">
       <label>المبلغ والعملة<span class="pair"><input id="t_amt" inputmode="numeric" placeholder="0"><select id="t_cur">${curOpts("USD")}</select></span></label>
@@ -442,7 +457,7 @@ views.transfer = () => {
       <label><span id="t_ratelbl">سعر الصرف (قابل للتعديل)</span><input id="t_rate" inputmode="decimal"><span class="hint" id="t_ratehint"></span></label>
     </div>
     <div class="grid">
-      <label>المستفيد${listSel("t_ben","bens")}</label>
+      <label>المستفيد (حساب)<select id="t_ben">${accOpts("")}</select></label>
       <label>مكان التسليم${listSel("t_place","places")}</label>
       <label>نسبة العمولة %<input id="t_fee" inputmode="decimal" placeholder="0"></label>
     </div>
@@ -474,9 +489,9 @@ views.transfer = () => {
     if (!(amt > 0)) { f("t_sum").innerHTML = `<span>أدخل المبلغ لعرض الحساب</span><span></span>`; return; }
     const c = compute(amt, fee||0, rate||0);
     f("t_sum").innerHTML = `<span>العمولة ${esc(fee||0)}%</span><span class="num">${fmt(c.fee)} ${esc(cur)}</span>
-      <span>المبلغ المسلَّم للوسيط (لنا)</span><span class="num">${fmt(c.fromTotal)} ${esc(cur)}</span>
-      <span>يسلّمه الوسيط للمستفيد</span><span class="num big">${fmt(c.toAmt)} ${esc(to)}</span>
-      <span>رصيدك عنده بعد هذه الحوالة</span><span class="num big">${fmt(Math.abs(r2(bal - c.sendAmt)))} ${esc(cur)} ${side(r2(bal - c.sendAmt))}</span>`;
+      <span>على الوسيط (عليه) بعد العمولة</span><span class="num big">${fmt(c.sendAmt)} ${esc(cur)}</span>
+      <span>للمستفيد (له)</span><span class="num big">${fmt(c.toAmt)} ${esc(to)}</span>
+      <span>رصيد الوسيط بعد هذه الحوالة</span><span class="num">${fmt(Math.abs(r2(bal - c.sendAmt)))} ${esc(cur)} ${side(r2(bal - c.sendAmt))}</span>`;
   };
   ["t_amt","t_fee","t_from"].forEach(id => f(id).addEventListener("input", calc));
   f("t_rate").addEventListener("input", () => { rateTouched = true; calc(); });
@@ -486,25 +501,27 @@ views.transfer = () => {
   f("tf").onsubmit = async e => {
     e.preventDefault(); f("t_err").textContent = ""; f("t_ok").textContent = "";
     const amt = r5(f("t_amt").value.replace(/,/g,"")), rate = effRate(), fee = +f("t_fee").value, rateTxt = f("t_rate").value.trim();
-    const from = f("t_from").value, benName = f("t_ben").value, place = f("t_place").value, ben = [benName, place].filter(Boolean).join("، "), cur = f("t_cur").value, tocur = f("t_tocur").value;
+    const from = f("t_from").value, to = f("t_ben").value, benName = to ? accName(to) : "", place = f("t_place").value, ben = [benName, place].filter(Boolean).join("، "), cur = f("t_cur").value, tocur = f("t_tocur").value;
     const errs = [];
     if (!from) errs.push("اختر الوسيط");
-    if (!benName) errs.push("اختر المستفيد");
+    if (!to) errs.push("اختر المستفيد");
+    if (to && to === from) errs.push("المستفيد يجب أن يختلف عن الوسيط");
     if (!(amt > 0)) errs.push("المبلغ يجب أن يكون أكبر من الصفر");
     if (!(rate > 0)) errs.push("سعر الصرف يجب أن يكون أكبر من الصفر");
     if (!(fee >= 0 && fee < 100)) errs.push("نسبة العمولة بين 0 و 100");
     if (!f("t_date").value) errs.push("اختر التاريخ");
     if (errs.length) { f("t_err").textContent = errs.join(" · "); return; }
     const c = compute(amt, fee, rate), note = withReason("t");
-    // Agent model (owner's rule): everything posts on the agent's account. Amount handed over = لنا, agent's commission = علينا,
-    // so the balance with the agent is what he still has to deliver. The beneficiary is a name, not an account.
+    // Owner's rule (2026-11-27): the agent who collected the money owes it (عليه) less his commission; the beneficiary
+    // account is owed the payout (له), so each beneficiary's balance shows the total of transfers due to him.
     const payout = `${fmt(c.sendAmt)} ${cur}` + (cur!==tocur ? ` على سعر ${rateTxt} = ${fmt(c.toAmt)} ${tocur}` : "");
-    const desc = `مبلغ ${fmt(c.fromTotal)} ${cur} مسلَّم لتحويله إلى ${ben}، يُسلَّم ${payout}`;
+    const desc = `حوالة ${fmt(c.fromTotal)} ${cur} قبضها لصالح ${ben}، يُسلَّم ${payout}`;
     const entries = [{acc:from, cur, debit:c.fromTotal, credit:0, kind:"حوالة", desc: desc + (note?" · "+note:""), recon:""}];
     if (c.fee > 0) entries.push({acc:from, cur, debit:0, credit:c.fee, kind:"عمولة", fee:true, desc:`عمولة الوسيط ${fee}% على حوالة ${ben}`, recon:""});
+    entries.push({acc:to, cur:tocur, debit:0, credit:c.toAmt, kind:"حوالة", desc:`حوالة واردة عن طريق ${accName(from)}: ${fmt(c.toAmt)} ${tocur}` + (place?` · مكان التسليم: ${place}`:"") + (note?" · "+note:""), recon:""});
     stampUsd(entries, cur === tocur ? {[cur]:usdRateOf(cur)} : pairUsdRates(cur, tocur, rate));
     const op = {reason:$("#t_reason").value, type:"transfer", date:f("t_date").value, createdAt:Date.now(), status:"active", note, country:f("t_country").value,
-      amount:amt, cur, tocur, rate, rateTxt, feePct:fee, feeAmt:c.fee, feeMode:settings.feeMode, from, beneficiary:ben, benName, place, payout:c.sendAmt, payoutTo:c.toAmt, delivered:false, entries};
+      amount:amt, cur, tocur, rate, rateTxt, feePct:fee, feeAmt:c.fee, feeMode:settings.feeMode, from, to, beneficiary:ben, benName, place, payout:c.sendAmt, payoutTo:c.toAmt, delivered:false, entries};
     const btn = f("tf").querySelector("button[type=submit]"); btn.disabled = true;
     try { await saveOp(op); f("t_ok").textContent = `حُفظت الحوالة #${op.no}`; f("t_amt").value = ""; f("t_note").value = ""; f("t_reason").value = ""; f("t_ben").value = ""; f("t_place").value = ""; calc(); }
     catch(err) { f("t_err").textContent = "تعذّر الحفظ: " + (err.message || err.code || "خطأ"); }
@@ -530,7 +547,7 @@ views.move = () => {
     </div>
     <div class="grid">
       <label>المبلغ والعملة<span class="pair"><input id="m_amt" inputmode="numeric" placeholder="0"><select id="m_cur">${curOpts("USD")}</select></span></label>
-      <label>الجهة<select id="m_side"><option value="credit">دائن / علينا (يزيد رصيده عندنا)</option><option value="debit">مدين / لنا (ينقص رصيده)</option></select></label>
+      <label>الجهة<select id="m_side"><option value="credit">دائن / له (يزيد رصيده عندنا)</option><option value="debit">مدين / عليه (ينقص رصيده)</option></select></label>
       <label>عمولة % (اختياري)<input id="m_fee" inputmode="decimal" placeholder="0"></label>
     </div>
     <label>سبب التحويل<select id="m_reason">${reasonOpts()}</select></label>
@@ -568,7 +585,7 @@ views.cut = () => {
   $("#app").innerHTML = `${roGuard()}${needAccounts()}
   <h1>قطع / تحويل عملة <span class="num hint">#${nextNo()}</span></h1>
   <form class="card" id="cf" novalidate>
-    <p class="hint">يُضاف المبلغ للحساب (علينا) بالعملة الأولى${settings.cutBothLegs ? "، ويُخصم المقابل (لنا) بالعملة الثانية من نفس الحساب" : "، والعملة الثانية تُذكر في البيان فقط"}. يمكن تغيير ذلك من الإعدادات.</p>
+    <p class="hint">يُضاف المبلغ للحساب (له) بالعملة الأولى${settings.cutBothLegs ? "، ويُخصم المقابل (عليه) بالعملة الثانية من نفس الحساب" : "، والعملة الثانية تُذكر في البيان فقط"}. يمكن تغيير ذلك من الإعدادات.</p>
     <div class="grid">
       <label>التاريخ<input type="date" id="c_date" value="${today()}"></label>
       <label>الحساب<select id="c_acc">${accOpts("")}</select></label>
@@ -666,7 +683,7 @@ views.statement = () => {
       <label>الحساب<select id="s_acc">${accOpts(ui.stAcc, "اختر", false)}</select></label>
       <div class="chips" role="tablist">${curs.map(c => `<button type="button" class="chip${c===cur?" on":""}" data-cur="${esc(c)}">${esc(c)} · <span class="num">${fmtBal(b[c]||0)}</span> ${side(b[c]||0)}</button>`).join("")}</div>
     </div>
-    <div class="balbox"><small class="hint">الرصيد ${ui.stTo?"حتى "+esc(ui.stTo):"الحالي"} · ${esc(CUR_NAMES[cur]||cur)}</small><strong class="num ${sideCls(finalBal)}">${fmt(Math.abs(finalBal))} ${esc(cur)}</strong><span class="pill ${finalBal<0?"bad":"ok"}">${finalBal<0?"مدين / لنا":finalBal>0?"دائن / علينا":"متوازن"}</span></div>
+    <div class="balbox"><small class="hint">الرصيد ${ui.stTo?"حتى "+esc(ui.stTo):"الحالي"} · ${esc(CUR_NAMES[cur]||cur)}</small><strong class="num ${sideCls(finalBal)}">${fmt(Math.abs(finalBal))} ${esc(cur)}</strong><span class="pill ${finalBal<0?"bad":"ok"}">${finalBal<0?"عليه":finalBal>0?"له":"متوازن"}</span></div>
   </div>
   <div class="card">
     <div class="grid">
@@ -677,7 +694,7 @@ views.statement = () => {
     <div class="chips"><button type="button" class="chip${!ui.stType?" on":""}" data-kind="">الكل <span class="num">${rows.length}</span></button>${Object.entries(kinds).map(([k,n]) => `<button type="button" class="chip${ui.stType===k?" on":""}" data-kind="${esc(k)}">${esc(k)} <span class="num">${n}</span></button>`).join("")}</div>
     ${cancelToggle()}
     <div class="scroll"><table class="st" style="min-width:820px">
-      <thead><tr><th>العملية</th><th>التاريخ</th><th>البيان</th><th class="n">مدين / لنا</th><th class="n">دائن / علينا</th><th class="n">الرصيد</th><th>الحالة</th></tr></thead>
+      <thead><tr><th>العملية</th><th>التاريخ</th><th>البيان</th><th class="n">مدين / عليه</th><th class="n">دائن / له</th><th class="n">الرصيد</th><th>الحالة</th></tr></thead>
       <tbody>
         <tr><td></td><td class="num">${esc(ui.stFrom||"")}</td><td>رصيد سابق</td><td class="n num">0</td><td class="n num">0</td><td class="n num ${sideCls(pre)}">${fmtBal(pre)}</td><td></td></tr>
         ${body || `<tr><td colspan="7" class="empty">لا توجد حركات بهذه العملة ضمن الفترة المحددة</td></tr>`}
@@ -690,7 +707,7 @@ views.statement = () => {
         <span class="hint">${selOp?`العملية المحددة #${selOp.no}`:"اضغط على سطر لتحديد عمليته"}</span>
         ${selOp ? ["ok","audit","err"].map(r => `<button type="button" data-recall="${r}" ${readOnly?"disabled":""}><span class="dot ${r}"></span> ${RECON_LBL[r]}</button>`).join("") : ""}
         <button type="button" class="p" id="s_receipt" ${readOnly?"disabled":""}>تسجيل دفعة مستلمة من ${esc(acc.name)}</button>
-        ${selOp && selOp.status !== "cancelled" && selOp.beneficiary && !selOp.delivered ? `<button type="button" id="s_deliver" ${readOnly?"disabled":""}>تأكيد تسليم المستفيد ${esc(selOp.beneficiary)}</button>` : ""}
+        ${selOp && selOp.status !== "cancelled" && selOp.beneficiary && !selOp.delivered ? `<button type="button" id="s_deliver" ${readOnly?"disabled":""}>${selOp.to ? "سلّم الوسيط المبلغ للمستفيد (تسوية الحسابين)" : "تأكيد تسليم المستفيد " + esc(selOp.beneficiary)}</button>` : ""}
         ${selOp && selOp.status !== "cancelled" ? `<button type="button" class="d" id="s_cancel" ${readOnly?"disabled":""}>إلغاء العملية</button>` : ""}
         <button type="button" id="s_dl">تنزيل الكشف (Excel)</button>
       </div>
@@ -720,8 +737,14 @@ views.statement = () => {
   });
   if ($("#s_cancel")) $("#s_cancel").onclick = () => openCancel(selOp);
   if ($("#s_deliver")) $("#s_deliver").onclick = async () => {
-    // Status only: the agent's balance changes only when a payment is received from him (حركة «استلام دفعة»).
-    await updateOp(selOp, {delivered:true, deliveredAt:Date.now()});
+    const o = selOp;
+    if (!o.to) { await updateOp(o, {delivered:true, deliveredAt:Date.now()}); return; } // older transfers: status only
+    // The agent paid the beneficiary on our behalf: the agent no longer owes it, and we no longer owe the beneficiary.
+    const agentE = o.entries[0], benE = o.entries.find(e => e.acc === o.to && !e.reversal);
+    const txt = `سلّم ${accName(o.from)} المبلغ إلى ${o.beneficiary}`;
+    const settle = [{acc:o.from, cur:o.cur, ur:agentE.ur, debit:0, credit:o.payout, kind:"تسليم", desc:txt, recon:""},
+                    {acc:o.to, cur:o.tocur, ur:benE?.ur, debit:o.payoutTo, credit:0, kind:"تسليم", desc:txt, recon:""}];
+    await updateOp(o, {delivered:true, deliveredAt:Date.now(), entries:[...o.entries, ...settle]});
   };
   $("#s_receipt").onclick = () => { ui.moveAcc = acc.id; ui.moveCur = cur; saveUi(); location.hash = "#move"; };
   $("#s_dl").onclick = () => downloadCsv(acc, cur, pre, shown, sumD, sumC, finalBal);
@@ -733,7 +756,7 @@ async function updateOp(op, patch) {
 async function downloadCsv(acc, cur, pre, rows, sumD, sumC, fin) {
   const q = v => '"' + String(v ?? "").replace(/"/g,'""') + '"';
   const lines = [["كشف حساب", acc.name + " · " + acc.country, cur].map(q).join(","),
-    ["العملية","التاريخ","النوع","البيان","مدين / لنا","دائن / علينا","الرصيد","الحالة"].map(q).join(","),
+    ["العملية","التاريخ","النوع","البيان","مدين / عليه","دائن / له","الرصيد","الحالة"].map(q).join(","),
     ["","","","رصيد سابق",0,0,fmtBal(pre),""].map(q).join(",")];
   rows.forEach(e => lines.push([e.op.no, e.op.date, e.kind, e.desc, e.debit||0, e.credit||0, fmtBal(e.bal), RECON_LBL[e.recon||""]].map(q).join(",")));
   lines.push(["","","","المجموع",sumD,sumC,fmtBal(fin),""].map(q).join(","));
@@ -869,7 +892,7 @@ views.accounts = () => {
 };
 
 // ----- rates & settings -----
-const APP_VERSION = "22";
+const APP_VERSION = "23";
 // Drops the service worker and its cached files, then reloads from the server. Data lives in Supabase, so nothing is lost.
 document.addEventListener("click", async e => { if (e.target.id !== "forceUpdate") return;
   e.target.disabled = true; e.target.textContent = "جارٍ التحديث…";
@@ -950,14 +973,14 @@ const AUTH_MSG = {
 const authMsg = e => AUTH_MSG[e.code] || ("تعذّر تسجيل الدخول (" + (e.code || e.message || "خطأ غير معروف") + ")");
 function showLogin(msg="") {
   $("#homeBtn").hidden = true; $("#logout").hidden = true; setStatus("");
-  $("#app").innerHTML = `<form class="card" id="lf" style="max-width:380px;margin:40px auto;width:100%" novalidate>
-    <img src="brand/transmind-logo.svg" alt="TransMind" width="200" height="200" style="border-radius:16px;align-self:center">
+  document.body.classList.add("auth");
+  $("#app").innerHTML = `<div class="auth"><div class="auth-logo"><img src="brand/transmind-logo.svg" alt="TransMind"></div><form class="auth-panel" id="lf" novalidate>
     <h1>تسجيل الدخول</h1>
     <label>البريد الإلكتروني<input type="email" id="l_email" autocomplete="username" dir="ltr" required></label>
     <label>كلمة السر<input type="password" id="l_pass" autocomplete="current-password" dir="ltr" minlength="8" required></label>
     <div class="err" id="l_msg" role="alert">${esc(msg)}</div>
-    <div class="btns"><button class="p" type="submit">دخول</button><button type="button" id="l_new">إنشاء حساب جديد</button></div>
-  </form>`;
+    <button class="p" type="submit">دخول</button><button type="button" id="l_new">إنشاء حساب جديد</button>
+  </form></div>`;
   const go = async signup => {
     const email = $("#l_email").value.trim(), password = $("#l_pass").value;
     if (!email || password.length < 8) { $("#l_msg").textContent = "أدخل البريد الإلكتروني وكلمة سر من 8 أحرف على الأقل."; return; }
@@ -1015,12 +1038,12 @@ function showLock(msg = "") {
   if ($("#bio_go") && !msg) return; // already showing: redrawing would drop a tap in progress
   loaded = {acc:false, ops:false, set:false}; accounts = []; ops = []; // nothing stays readable behind the lock
   $("#homeBtn").hidden = true; $("#logout").hidden = true; setStatus("");
-  $("#app").innerHTML = `<div class="card" style="max-width:380px;margin:40px auto;width:100%;align-items:center;text-align:center">
-    <img src="brand/transmind-logo.svg" alt="TransMind" width="200" height="200" style="border-radius:16px">
+  document.body.classList.add("auth");
+  $("#app").innerHTML = `<div class="auth"><div class="auth-logo"><img src="brand/transmind-logo.svg" alt="TransMind"></div><div class="auth-panel">
     <h1>التطبيق مقفل</h1>
     <button class="p" type="button" id="bio_go">فتح بالبصمة / Face ID</button>
     <button type="button" id="bio_pw">الدخول بكلمة السر بدلاً من ذلك</button>
-    <div class="err" id="bio_msg" role="alert">${esc(msg)}</div></div>`;
+    <div class="err" id="bio_msg" role="alert">${esc(msg)}</div></div></div>`;
   $("#bio_go").onclick = async () => {
     const btn = $("#bio_go"), m = $("#bio_msg");
     m.textContent = ""; btn.textContent = "جارٍ التحقق…";
