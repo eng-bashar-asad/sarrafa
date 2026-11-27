@@ -33,15 +33,13 @@
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--top)}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--top);color:var(--top-ink);border-bottom:1px solid var(--line);
-  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px 0}
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:8px}
 .top-row{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;max-width:1200px;margin-inline:auto}
 .brand{font-family:var(--f-display);font-size:20px}
 .status{font-size:12px;opacity:.85}
-nav{display:flex;gap:2px;overflow-x:auto;max-width:1200px;margin-inline:auto;scrollbar-width:none}
-nav a{color:var(--top-ink);text-decoration:none;padding:8px 14px;white-space:nowrap;border-radius:8px 8px 0 0;font-size:14px;opacity:.85}
-.ic{width:18px;height:18px;fill:url(#gold);vertical-align:-3px;margin-inline-end:6px;filter:drop-shadow(0 1px 0 rgba(90,60,5,.45)) drop-shadow(0 0 1px rgba(255,255,255,.9))}
+.ic{width:18px;height:18px;fill:url(#gold);vertical-align:-3px;margin-inline-end:6px;filter:drop-shadow(0 1px 0 rgba(90,60,5,.18))}
 .ic.coin{width:26px;height:26px;vertical-align:-6px;margin-inline-end:4px}
-nav a.on .ic{filter:drop-shadow(0 1px 1px rgba(90,60,5,.55)) drop-shadow(0 0 2px rgba(255,236,160,.9))}
+.homebtn{background:var(--surface);color:var(--top-ink);font-weight:600;padding:6px 12px;border-radius:99px}
 .tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
 @media (min-width:700px){.tiles{grid-template-columns:repeat(4,1fr)}}
 .tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:120px;padding:16px;text-align:center;
@@ -53,7 +51,6 @@ nav a.on .ic{filter:drop-shadow(0 1px 1px rgba(90,60,5,.55)) drop-shadow(0 0 2px
 .pcard{display:flex;flex-direction:column;align-items:stretch;gap:6px;text-align:start;padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);width:100%}
 .pname{font-weight:600;font-size:16px}
 .pusd{font-size:20px;font-weight:700} .pusd small{font-size:12px;font-weight:500}
-nav a.on{background:var(--bg);color:var(--accent);opacity:1;font-weight:600}
 main{max-width:1200px;margin-inline:auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 60px;display:flex;flex-direction:column;gap:16px}
 h1,h2,h3{font-family:var(--f-display);margin:0;line-height:1.3}
 h1{font-size:24px} h2{font-size:18px}
@@ -117,8 +114,8 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
   <defs>
     <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#7a5410"/><stop offset=".2" stop-color="#f9e7a0"/><stop offset=".38" stop-color="#c9971f"/>
-      <stop offset=".52" stop-color="#fff8d6"/><stop offset=".7" stop-color="#b8861a"/><stop offset="1" stop-color="#6e4c0c"/>
+      <stop offset="0" stop-color="#9a7430"/><stop offset=".35" stop-color="#c9a961"/><stop offset=".6" stop-color="#b8954a"/>
+      <stop offset="1" stop-color="#8c6a2b"/>
     </linearGradient>
   </defs>
   <symbol id="i-bal" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 7a3 3 0 0 1 3-3h11a1 1 0 0 1 0 2H6a1 1 0 0 0 0 2h13a2 2 0 0 1 2 2v8a3 3 0 0 1-3 3H6a3 3 0 0 1-3-3V7zm14 7a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3z"/></symbol>
@@ -133,18 +130,7 @@ dialog::backdrop{background:rgba(0,0,0,.4)}
   <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="11"/><circle cx="12" cy="12" r="8.3" fill="none" stroke="#8a6212" stroke-opacity=".55" stroke-width="1"/><path fill="#7a5410" fill-opacity=".85" d="M12.9 5.5v1.4c1.6.2 2.8 1 3.3 2.4l-1.9.8c-.3-.8-1-1.3-2-1.3-1.1 0-1.7.5-1.7 1.1 0 .7.6 1 2.1 1.4 2.2.6 3.7 1.3 3.7 3.4 0 1.6-1.2 2.8-3.5 3v1.4h-1.8v-1.4c-1.9-.2-3.2-1.2-3.6-2.8l2-.7c.3 1 1.1 1.6 2.4 1.6 1.2 0 1.9-.5 1.9-1.2 0-.8-.7-1.1-2.3-1.5-2-.5-3.5-1.2-3.5-3.2 0-1.5 1.1-2.6 3.1-2.9V5.5h1.8z"/></symbol>
 </svg>
 <header class="top">
-  <div class="top-row"><span class="brand"><svg class="ic coin" aria-hidden="true"><use href="#i-coin"/></svg> صرافة · الحوالات والأرصدة</span><span><span class="status" id="status">جارِ تحميل البيانات…</span> <button type="button" id="logout" hidden style="padding:2px 10px;font-size:12px">خروج</button></span></div>
-  <nav id="nav" aria-label="الأقسام">
-    <a href="#home"><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>الرئيسية</a>
-    <a href="#balances"><svg class="ic" aria-hidden="true"><use href="#i-bal"/></svg>الأرصدة</a>
-    <a href="#transfer"><svg class="ic" aria-hidden="true"><use href="#i-tr"/></svg>حوالة جديدة</a>
-    <a href="#move"><svg class="ic" aria-hidden="true"><use href="#i-cash"/></svg>حركة نقدية</a>
-    <a href="#cut"><svg class="ic" aria-hidden="true"><use href="#i-ex"/></svg>قطع / تحويل عملة</a>
-    <a href="#statement"><svg class="ic" aria-hidden="true"><use href="#i-doc"/></svg>كشف حساب</a>
-    <a href="#log"><svg class="ic" aria-hidden="true"><use href="#i-log"/></svg>سجل العمليات</a>
-    <a href="#accounts"><svg class="ic" aria-hidden="true"><use href="#i-usr"/></svg>الحسابات</a>
-    <a href="#rates"><svg class="ic" aria-hidden="true"><use href="#i-pct"/></svg>أسعار اليوم والإعدادات</a>
-  </nav>
+  <div class="top-row"><button type="button" id="homeBtn" class="homebtn" hidden><svg class="ic" aria-hidden="true"><use href="#i-home"/></svg>الرئيسية</button><span class="brand"><svg class="ic coin" aria-hidden="true"><use href="#i-coin"/></svg> صرافة · الحوالات والأرصدة</span><span><span class="status" id="status">جارِ تحميل البيانات…</span> <button type="button" id="logout" hidden style="padding:2px 10px;font-size:12px">خروج</button></span></div>
 </header>
 <main id="app"><div class="empty">جارِ تحميل البيانات…</div></main>
 
@@ -298,7 +284,7 @@ let current = null;
 function route(fromData) {
   const v = (location.hash || "#home").slice(1);
   const name = views[v] ? v : "home";
-  document.querySelectorAll("#nav a").forEach(a => a.classList.toggle("on", a.getAttribute("href") === "#" + name));
+  $("#homeBtn").hidden = name === "home" || !me;
   if (window.__dbFailed) return;
   if (!(loaded.acc && loaded.ops && loaded.set)) { $("#app").innerHTML = `<div class="empty">جارِ تحميل البيانات…</div>`; return; }
   if (fromData === true && FORMS.has(name) && current === name) return;
@@ -784,7 +770,7 @@ const AUTH_MSG = {
 };
 const authMsg = e => AUTH_MSG[e.code] || ("تعذّر تسجيل الدخول (" + (e.code || e.message || "خطأ غير معروف") + ")");
 function showLogin(msg="") {
-  $("#nav").hidden = true; $("#logout").hidden = true; setStatus("");
+  $("#homeBtn").hidden = true; $("#logout").hidden = true; setStatus("");
   $("#app").innerHTML = `<form class="card" id="lf" style="max-width:380px;margin:40px auto;width:100%" novalidate>
     <h1>تسجيل الدخول</h1>
     <label>البريد الإلكتروني<input type="email" id="l_email" autocomplete="username" dir="ltr" required></label>
@@ -840,7 +826,7 @@ async function bioSettings() {
 }
 function showLock(msg = "") {
   loaded = {acc:false, ops:false, set:false}; accounts = []; ops = []; // nothing stays readable behind the lock
-  $("#nav").hidden = true; $("#logout").hidden = true; setStatus("");
+  $("#homeBtn").hidden = true; $("#logout").hidden = true; setStatus("");
   $("#app").innerHTML = `<div class="card" style="max-width:380px;margin:40px auto;width:100%;align-items:center;text-align:center">
     <svg class="ic coin" style="width:64px;height:64px" aria-hidden="true"><use href="#i-coin"/></svg>
     <h1>التطبيق مقفل</h1>
@@ -859,7 +845,7 @@ async function onSession(session) {
   me = session?.user || null;
   if (!me) { loaded = {acc:false, ops:false, set:false}; unlocked = false; showLogin(); return; }
   if (bioId() && !unlocked) { showLock(); return; }
-  $("#nav").hidden = false; $("#logout").hidden = false;
+  $("#logout").hidden = false;
   try { await loadAll(); } catch(e) { setStatus("خطأ في الاتصال: " + (e.message || "")); }
 }
 
@@ -868,6 +854,7 @@ async function onSession(session) {
   if (!window.supabase || !window.SARRAFA_CONFIG?.url) { $("#app").innerHTML = `<div class="banner">تعذّر الاتصال بالخادم. تحقق من الاتصال بالإنترنت وحاول مرة أخرى.</div>`; return; }
   sb = window.supabase.createClient(SARRAFA_CONFIG.url, SARRAFA_CONFIG.key);
   $("#logout").onclick = () => sb.auth.signOut();
+  $("#homeBtn").onclick = () => { location.hash = "#home"; };
   sb.auth.onAuthStateChange((ev, session) => { if (ev !== "TOKEN_REFRESHED") setTimeout(() => onSession(session)); });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) { hiddenAt = Date.now(); return; }
