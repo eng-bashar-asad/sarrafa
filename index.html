@@ -102,7 +102,7 @@ table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:start;padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
 th{font-weight:600;color:var(--muted);font-size:12px;white-space:nowrap}
 td.n,th.n{text-align:end;white-space:nowrap}
-.lana{color:var(--ok)} .alayna{color:var(--bad)}
+.pos{color:var(--ok)} .neg{color:var(--bad)}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
 .chip{font-size:13px;padding:4px 12px;border:1px solid var(--line);border-radius:99px;background:var(--bg);cursor:pointer;color:var(--ink)}
 .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
@@ -239,7 +239,9 @@ console.assert(r5(36039.4) === 36040 && r5(177) === 175 && r5(178) === 180, "r5"
 const fmt = (x, d=0) => (+x).toLocaleString("en-US", {minimumFractionDigits:d, maximumFractionDigits:d});
 const fmtBal = x => { const v = r2(x); return v < 0 ? "(" + fmt(-v) + ")" : fmt(v); };
 const side = x => r2(x) < 0 ? "عليه" : r2(x) > 0 ? "له" : ""; // per account: عليه = owes us, له = we owe him
-const sideCls = x => r2(x) < 0 ? "lana" : r2(x) > 0 ? "alayna" : "";
+// Colour follows the word shown: per account له = green, عليه = red; company total لنا = green, علينا = red.
+const sideCls = x => r2(x) > 0 ? "pos" : r2(x) < 0 ? "neg" : "";
+const totalCls = x => r2(x) < 0 ? "pos" : r2(x) > 0 ? "neg" : "";
 const today = () => new Date().toISOString().slice(0,10);
 const accName = id => { const a = accounts.find(a => a.id === id); return a ? a.name + " · " + a.country : "حساب محذوف"; };
 const rateOf = (from, to) => {
@@ -428,7 +430,7 @@ views.balances = () => {
     </button>`; };
   $("#app").innerHTML = `${needAccounts()}
   <h1>الأرصدة</h1>
-  <div class="balbox"><small class="hint">مجموع الأرصدة محوّلاً إلى الدولار بأسعار وقت كل عملية</small><strong class="num ${sideCls(total)}">${fmt(Math.abs(total))} USD</strong><span class="pill ${total<0?"ok":total>0?"bad":""}">${total<0?"لنا":total>0?"علينا":"متوازن"}</span></div>
+  <div class="balbox"><small class="hint">مجموع الأرصدة محوّلاً إلى الدولار بأسعار وقت كل عملية</small><strong class="num ${totalCls(total)}">${fmt(Math.abs(total))} USD</strong><span class="pill ${total<0?"ok":total>0?"bad":""}">${total<0?"لنا":total>0?"علينا":"متوازن"}</span></div>
   <p class="hint">لكل شخص: الرصيد الموحّد بالدولار، وتحته رصيد كل عملة. «له» = مبلغ مستحق له عندنا، «عليه» = مبلغ مستحق علينا منه، والرقم بين قوسين = عليه. اضغط على العملة لفتح كشفها.</p>
   <div class="plist">${list.map(card).join("")}</div>`;
   document.querySelectorAll(".pcard").forEach(btn => btn.onclick = e => {
@@ -688,7 +690,7 @@ views.statement = () => {
       <label>الحساب<select id="s_acc">${accOpts(ui.stAcc, "اختر", false)}</select></label>
       <div class="chips" role="tablist">${curs.map(c => `<button type="button" class="chip${c===cur?" on":""}" data-cur="${esc(c)}">${esc(c)} · <span class="num">${fmtBal(b[c]||0)}</span> ${side(b[c]||0)}</button>`).join("")}</div>
     </div>
-    <div class="balbox"><small class="hint">الرصيد ${ui.stTo?"حتى "+esc(ui.stTo):"الحالي"} · ${esc(CUR_NAMES[cur]||cur)}</small><strong class="num ${sideCls(finalBal)}">${fmt(Math.abs(finalBal))} ${esc(cur)}</strong><span class="pill ${finalBal<0?"bad":"ok"}">${finalBal<0?"عليه":finalBal>0?"له":"متوازن"}</span></div>
+    <div class="balbox"><small class="hint">الرصيد ${ui.stTo?"حتى "+esc(ui.stTo):"الحالي"} · ${esc(CUR_NAMES[cur]||cur)}</small><strong class="num ${sideCls(finalBal)}">${fmt(Math.abs(finalBal))} ${esc(cur)}</strong><span class="pill ${finalBal<0?"bad":finalBal>0?"ok":""}">${finalBal<0?"عليه":finalBal>0?"له":"متوازن"}</span></div>
   </div>
   <div class="card">
     <div class="grid">
@@ -897,7 +899,7 @@ views.accounts = () => {
 };
 
 // ----- rates & settings -----
-const APP_VERSION = "24";
+const APP_VERSION = "25";
 // Drops the service worker and its cached files, then reloads from the server. Data lives in Supabase, so nothing is lost.
 document.addEventListener("click", async e => { if (e.target.id !== "forceUpdate") return;
   e.target.disabled = true; e.target.textContent = "جارٍ التحديث…";
