@@ -44,7 +44,7 @@
 :root[data-theme="transmind-teal"] body,:root[data-theme="transmind-teal"] body::after{background-color:#02090c}
 :root[data-theme="transmind-teal"] .tile{background:linear-gradient(160deg,rgba(13,54,64,0.55),rgba(2,9,12,0.5))}
 :root[data-theme="transmind-teal"] body::after{background-image:url("brand/transmind-teal.svg")}
-:root[data-theme="transmind-black"]{--bg:#000000;--surface:rgba(28,28,28,0.88);--ink:#eef2f6;--muted:#bfc5cc;--line:#5c5c5c;--accent:#8f8f8f;--accent-soft:#333333;--brass:#ffffff;--brass-soft:#1c1c1c;--top:#0d0d0d;--top-ink:#eef2f6;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#2b2b2b;--g2:#0d0d0d;--g3:#212121;--g4:#161616;--sel:#3a3410;--hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
+:root[data-theme="transmind-black"]{--bg:#000000;--surface:rgba(28,28,28,0.88);--ink:#eef2f6;--muted:#bfc5cc;--line:#656a70;--accent:#8a939c;--accent-soft:#343536;--brass:#ffffff;--brass-soft:#1c1c1c;--top:#0d0d0d;--top-ink:#eef2f6;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#2c2d2d;--g2:#0d0d0d;--g3:#232324;--g4:#161616;--sel:#3a3410;--hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
 :root[data-theme="transmind-black"] body,:root[data-theme="transmind-black"] body::after{background-color:#000000}
 :root[data-theme="transmind-black"] .tile{background:linear-gradient(160deg,rgba(28,28,28,0.55),rgba(0,0,0,0.5))}
 :root[data-theme="transmind-black"] body::after{background-image:url("brand/transmind-black.svg")}
@@ -53,6 +53,11 @@
 :root[data-theme="transmind-chrome"] .tile{background:linear-gradient(160deg,rgba(58,64,72,0.55),rgba(10,11,13,0.5))}
 :root[data-theme="transmind-chrome"] body::after{background-image:url("brand/transmind-chrome.svg")}
 :root[data-theme="transmind-black"] body::after{opacity:1}
+/* Black + silver: a broad silver light sweeps across the whole screen so the motion is obvious. */
+:root[data-theme="transmind-black"] main::before{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;
+  background:linear-gradient(115deg,transparent 30%,rgba(225,232,240,.10) 42%,rgba(255,255,255,.30) 50%,rgba(225,232,240,.10) 58%,transparent 70%) 0 0/300% 100%;animation:tmSweep 5s ease-in-out infinite}
+@keyframes tmSweep{0%{background-position:100% 0}100%{background-position:-100% 0}}
+@media (prefers-reduced-motion:reduce){:root[data-theme="transmind-black"] main::before{animation:none;opacity:0}}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--top)}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--top);color:var(--top-ink);border-bottom:1px solid var(--line);
@@ -237,7 +242,7 @@ const saveUi = () => { try { localStorage.setItem("ui", JSON.stringify(ui)); } c
 
 // ---------- helpers ----------
 const $ = s => document.querySelector(s);
-const APP_VERSION = "30"; // keep in step with CACHE in sw.js
+const APP_VERSION = "31"; // keep in step with CACHE in sw.js
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 // ponytail: money kept as JS numbers rounded to 2 decimals; upgrade path is integer minor units if amounts exceed ~1e13.
 const r2 = x => Math.round((+x + Number.EPSILON) * 100) / 100;
@@ -921,7 +926,7 @@ document.addEventListener("click", async e => { if (e.target.id !== "forceUpdate
   try { sessionStorage.setItem("updFrom", JSON.stringify({v:APP_VERSION, t:Date.now(), unlocked})); } catch {}
   try { for (const r of await navigator.serviceWorker?.getRegistrations?.() || []) await r.unregister(); for (const k of await caches.keys()) await caches.delete(k); } catch {}
   location.replace(location.pathname + "?v=" + Date.now() + "#home"); });
-const THEMES = [["transmind","كحلي (متحرك)"],["transmind-teal","فيروزي (متحرك)"],["transmind-black","أسود (متحرك)"],["transmind-chrome","كروم لامع (متحرك)"]];
+const THEMES = [["transmind","كحلي (متحرك)"],["transmind-teal","فيروزي (متحرك)"],["transmind-black","أسود وفضي (متحرك)"],["transmind-chrome","كروم لامع (متحرك)"]];
 document.addEventListener("click", e => { const b = e.target.closest("[data-theme-pick]"); if (!b) return;
   const t = b.dataset.themePick; if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { t ? localStorage.setItem("theme", t) : localStorage.removeItem("theme"); } catch {}

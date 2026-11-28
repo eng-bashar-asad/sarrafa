@@ -1,7 +1,7 @@
 // Page and app code: network first (bypassing the HTTP cache so updates show at once), but give up after 4 s and use the
 // saved copy so a slow connection never blocks opening. Big fixed files (supabase library, logo): saved copy first,
 // refreshed in the background. Data always comes live from Supabase.
-const CACHE = "sarrafa-v30";
+const CACHE = "sarrafa-v31";
 self.addEventListener("install", e => self.skipWaiting());
 self.addEventListener("activate", e => e.waitUntil(caches.keys().then(ks => Promise.all(ks.filter(k => k !== CACHE).map(k => caches.delete(k)))).then(() => clients.claim())));
 const save = (req, r) => { if (r.ok) { const copy = r.clone(); caches.open(CACHE).then(c => c.put(req, copy)); } return r; };
