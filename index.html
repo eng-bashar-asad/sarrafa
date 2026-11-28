@@ -123,6 +123,7 @@ td.n,th.n{text-align:end;white-space:nowrap}
 .pill.warn{background:color-mix(in srgb,var(--warn) 16%,transparent);color:var(--warn)}
 .pill.bad{background:color-mix(in srgb,var(--bad) 14%,transparent);color:var(--bad)}
 .empty{padding:24px;text-align:center;color:var(--muted)}
+.toast{position:fixed;inset-inline:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:50;background:#1f7a3f;color:#fff;border-radius:12px;padding:14px 16px;text-align:center;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 /* Sign-in and lock screens: logo fills the top half, sign-in options in the bottom half, colours taken from the logo. */
 body.auth{background:#05080f} body.auth .top,body.auth::before{display:none}
 body.auth main{max-width:none;padding:0;gap:0}
@@ -230,6 +231,7 @@ const saveUi = () => { try { localStorage.setItem("ui", JSON.stringify(ui)); } c
 
 // ---------- helpers ----------
 const $ = s => document.querySelector(s);
+const APP_VERSION = "26"; // keep in step with CACHE in sw.js
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 // ponytail: money kept as JS numbers rounded to 2 decimals; upgrade path is integer minor units if amounts exceed ~1e13.
 const r2 = x => Math.round((+x + Number.EPSILON) * 100) / 100;
@@ -239,9 +241,8 @@ console.assert(r5(36039.4) === 36040 && r5(177) === 175 && r5(178) === 180, "r5"
 const fmt = (x, d=0) => (+x).toLocaleString("en-US", {minimumFractionDigits:d, maximumFractionDigits:d});
 const fmtBal = x => { const v = r2(x); return v < 0 ? "(" + fmt(-v) + ")" : fmt(v); };
 const side = x => r2(x) < 0 ? "عليه" : r2(x) > 0 ? "له" : ""; // per account: عليه = owes us, له = we owe him
-// Colour follows the word shown: per account له = green, عليه = red; company total لنا = green, علينا = red.
+// Colour follows the word shown, for every account: له = green, عليه = red.
 const sideCls = x => r2(x) > 0 ? "pos" : r2(x) < 0 ? "neg" : "";
-const totalCls = x => r2(x) < 0 ? "pos" : r2(x) > 0 ? "neg" : "";
 const today = () => new Date().toISOString().slice(0,10);
 const accName = id => { const a = accounts.find(a => a.id === id); return a ? a.name + " · " + a.country : "حساب محذوف"; };
 const rateOf = (from, to) => {
@@ -377,7 +378,7 @@ async function loadAll(tries = 3) {
   loaded = {acc:true, ops:true, set:true};
   setStatus("متصل · البيانات محفوظة"); route(true);
 }
-function setStatus(t) { $("#status").textContent = t; }
+function setStatus(t) { $("#status").textContent = t ? t + " · الإصدار " + APP_VERSION : ""; }
 
 // Clean typed numbers on leaving a field: "01.8" -> "1.8", "007" -> "7".
 document.addEventListener("focusout", e => { const i = e.target; if (i.matches?.("input[inputmode=decimal]") && /^0\d/.test(i.value)) { i.value = i.value.replace(/^0+(?=\d)/, ""); i.dispatchEvent(new Event("input")); } });
@@ -420,7 +421,7 @@ const needAccounts = () => accounts.length ? "" : `<div class="banner">لا تو
 views.balances = () => {
   const b = balances(), usd = {};
   for (const o of ops) for (const e of (o.entries||[])) usd[e.acc] = (usd[e.acc]||0) + entryUsd(e);
-  const total = r5(Object.values(usd).reduce((x,y) => x + y, 0));
+  const totLah = r5(Object.values(usd).filter(v => v > 0).reduce((x,y) => x + y, 0)), totAlayh = r5(-Object.values(usd).filter(v => v < 0).reduce((x,y) => x + y, 0));
   const list = accounts.slice().sort((x,y)=>x.name.localeCompare(y.name,"ar"));
   const card = a => { const u = r5(usd[a.id]||0), cs = Object.entries(b[a.id]||{}).filter(([,v]) => r2(v));
     return `<button type="button" class="pcard" data-acc="${esc(a.id)}">
@@ -430,7 +431,8 @@ views.balances = () => {
     </button>`; };
   $("#app").innerHTML = `${needAccounts()}
   <h1>الأرصدة</h1>
-  <div class="balbox"><small class="hint">مجموع الأرصدة محوّلاً إلى الدولار بأسعار وقت كل عملية</small><strong class="num ${totalCls(total)}">${fmt(Math.abs(total))} USD</strong><span class="pill ${total<0?"ok":total>0?"bad":""}">${total<0?"لنا":total>0?"علينا":"متوازن"}</span></div>
+  <div class="grid"><div class="balbox"><small class="hint">مجموع «له» بالدولار</small><strong class="num pos">${fmt(totLah)} USD</strong></div>
+  <div class="balbox"><small class="hint">مجموع «عليه» بالدولار</small><strong class="num neg">${fmt(totAlayh)} USD</strong></div></div>
   <p class="hint">لكل شخص: الرصيد الموحّد بالدولار، وتحته رصيد كل عملة. «له» = مبلغ مستحق له عندنا، «عليه» = مبلغ مستحق علينا منه، والرقم بين قوسين = عليه. اضغط على العملة لفتح كشفها.</p>
   <div class="plist">${list.map(card).join("")}</div>`;
   document.querySelectorAll(".pcard").forEach(btn => btn.onclick = e => {
@@ -899,10 +901,10 @@ views.accounts = () => {
 };
 
 // ----- rates & settings -----
-const APP_VERSION = "25";
 // Drops the service worker and its cached files, then reloads from the server. Data lives in Supabase, so nothing is lost.
 document.addEventListener("click", async e => { if (e.target.id !== "forceUpdate") return;
   e.target.disabled = true; e.target.textContent = "جارٍ التحديث…";
+  try { sessionStorage.setItem("updFrom", JSON.stringify({v:APP_VERSION, t:Date.now(), unlocked})); } catch {}
   try { for (const r of await navigator.serviceWorker?.getRegistrations?.() || []) await r.unregister(); for (const k of await caches.keys()) await caches.delete(k); } catch {}
   location.replace(location.pathname + "?v=" + Date.now() + "#home"); });
 const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"],["transmind","TransMind (متحرك)"]];
@@ -987,6 +989,7 @@ function showLogin(msg="") {
     <label>كلمة السر<input type="password" id="l_pass" autocomplete="current-password" dir="ltr" minlength="8" required></label>
     <div class="err" id="l_msg" role="alert">${esc(msg)}</div>
     <button class="p" type="submit">دخول</button><button type="button" id="l_new">إنشاء حساب جديد</button>
+    <p class="hint" style="text-align:center;color:#9fb3c8">الإصدار ${APP_VERSION}</p>
   </form></div>`;
   const go = async signup => {
     const email = $("#l_email").value.trim(), password = $("#l_pass").value;
@@ -1008,6 +1011,12 @@ function showLogin(msg="") {
 // Upgrade path: Supabase passkey/MFA sign-in once available on the project.
 const BIO_KEY = "bioCredId", LOCK_AFTER_MS = 5 * 60 * 1000;
 let unlocked = false, hiddenAt = 0, lastSession = null;
+// After «تنزيل أحدث نسخة الآن»: keep the session unlocked across that one reload (same tab, within 60 s) and say what happened.
+let updInfo = null; try { updInfo = JSON.parse(sessionStorage.getItem("updFrom") || "null"); sessionStorage.removeItem("updFrom"); } catch {}
+if (updInfo && Date.now() - updInfo.t < 60000) { unlocked = !!updInfo.unlocked;
+  addEventListener("load", () => { const d = document.createElement("div"); d.className = "toast"; d.setAttribute("role", "status");
+    d.textContent = updInfo.v === APP_VERSION ? `لديك أحدث نسخة بالفعل (الإصدار ${APP_VERSION})` : `تم التحديث من الإصدار ${updInfo.v} إلى الإصدار ${APP_VERSION}`;
+    document.body.append(d); setTimeout(() => d.remove(), 6000); }); }
 const bioId = () => { try { return localStorage.getItem(BIO_KEY); } catch(e) { return null; } };
 const b64u = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 const unb64u = t => Uint8Array.from(atob(t.replace(/-/g,"+").replace(/_/g,"/")), c => c.charCodeAt(0));
@@ -1050,7 +1059,8 @@ function showLock(msg = "") {
     <h1>التطبيق مقفل</h1>
     <button class="p" type="button" id="bio_go">فتح بالبصمة / Face ID</button>
     <button type="button" id="bio_pw">الدخول بكلمة السر بدلاً من ذلك</button>
-    <div class="err" id="bio_msg" role="alert">${esc(msg)}</div></div></div>`;
+    <div class="err" id="bio_msg" role="alert">${esc(msg)}</div>
+    <p class="hint" style="text-align:center;color:#9fb3c8">الإصدار ${APP_VERSION}</p></div></div>`;
   $("#bio_go").onclick = async () => {
     const btn = $("#bio_go"), m = $("#bio_msg");
     m.textContent = ""; btn.textContent = "جارٍ التحقق…";
