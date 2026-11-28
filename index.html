@@ -358,12 +358,17 @@ async function patchOp(op, patch) {
   must(await sb.from("ops").update({data:{...strip(op), ...patch}}).eq("id", op.id));
   await loadAll();
 }
-async function loadAll() {
+// Retries a few times: right after a token refresh the server can briefly reject the new token (seen in logs as 401 PGRST303).
+async function loadAll(tries = 3) {
   const [a, o, st] = await Promise.all([
     sb.from("accounts").select("id,name,country,kind").order("name"),
     sb.from("ops").select("id,no,data").order("no"),
     sb.from("settings").select("data").maybeSingle()]);
-  for (const r of [a, o, st]) if (r.error) throw r.error;
+  const bad = [a, o, st].find(r => r.error);
+  if (bad) {
+    if (tries > 1) { await new Promise(res => setTimeout(res, 1200)); if (bad.error.code === "PGRST303" || bad.status === 401) await sb.auth.refreshSession().catch(() => {}); return loadAll(tries - 1); }
+    throw bad.error;
+  }
   accounts = a.data; ops = o.data.map(unwrap);
   settings = {...structuredClone(DEFAULT_SETTINGS), ...(st.data?.data || {})};
   if (cancelling) cancelling = ops.find(x => x.id === cancelling.id) || null;
@@ -892,7 +897,7 @@ views.accounts = () => {
 };
 
 // ----- rates & settings -----
-const APP_VERSION = "23";
+const APP_VERSION = "24";
 // Drops the service worker and its cached files, then reloads from the server. Data lives in Supabase, so nothing is lost.
 document.addEventListener("click", async e => { if (e.target.id !== "forceUpdate") return;
   e.target.disabled = true; e.target.textContent = "جارٍ التحديث…";
@@ -1047,7 +1052,7 @@ function showLock(msg = "") {
   $("#bio_go").onclick = async () => {
     const btn = $("#bio_go"), m = $("#bio_msg");
     m.textContent = ""; btn.textContent = "جارٍ التحقق…";
-    try { await bioVerify(); unlocked = true; onSession(lastSession); }
+    try { await bioVerify(); unlocked = true; onSession(lastSession || (await sb.auth.getSession()).data.session); }
     catch(e) {
       if (!$("#bio_go") || (e.name === "AbortError" && bioAbort)) return; // replaced by a newer tap
       btn.textContent = "فتح بالبصمة / Face ID";
@@ -1063,13 +1068,22 @@ async function onSession(session) {
   if (!me) { loaded = {acc:false, ops:false, set:false}; unlocked = false; showLogin(); return; }
   if (bioId() && !unlocked) { showLock(); return; }
   $("#logout").hidden = false;
-  try { await loadAll(); } catch(e) { setStatus("خطأ في الاتصال: " + (e.message || "")); }
+  if (!loaded.ops) { document.body.classList.remove("auth"); $("#app").innerHTML = `<div class="empty">جارِ تحميل البيانات…</div>`; }
+  try { await loadAll(); }
+  catch(e) {
+    setStatus("خطأ في الاتصال");
+    if (!loaded.ops) $("#app").innerHTML = `<div class="card" style="max-width:420px;margin:40px auto;text-align:center;align-items:center">
+      <p>تعذّر تحميل البيانات. تحقق من الاتصال بالإنترنت ثم أعد المحاولة.</p><p class="hint">${esc(e.message || e.code || "")}</p>
+      <button class="p" type="button" id="retryLoad">إعادة المحاولة</button></div>`;
+    $("#retryLoad")?.addEventListener("click", () => onSession(lastSession));
+  }
 }
 
 // ---------- boot ----------
 (() => {
   if (!window.supabase || !window.SARRAFA_CONFIG?.url) { $("#app").innerHTML = `<div class="banner">تعذّر الاتصال بالخادم. تحقق من الاتصال بالإنترنت وحاول مرة أخرى.</div>`; return; }
   sb = window.supabase.createClient(SARRAFA_CONFIG.url, SARRAFA_CONFIG.key);
+  if (bioId()) showLock(); // fingerprint prompt is available at once; the saved session is checked in parallel
   $("#logout").onclick = () => sb.auth.signOut();
   // Home: step back through history to the start instead of piling new entries on top.
   $("#homeBtn").onclick = () => { if (navDepth > 0) { goingHome = true; history.go(-navDepth); } else location.replace("#home"); };
