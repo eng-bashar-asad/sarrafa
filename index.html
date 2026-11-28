@@ -242,7 +242,7 @@ const saveUi = () => { try { localStorage.setItem("ui", JSON.stringify(ui)); } c
 
 // ---------- helpers ----------
 const $ = s => document.querySelector(s);
-const APP_VERSION = "32"; // keep in step with CACHE in sw.js
+const APP_VERSION = "33"; // keep in step with CACHE in sw.js
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 // ponytail: money kept as JS numbers rounded to 2 decimals; upgrade path is integer minor units if amounts exceed ~1e13.
 const r2 = x => Math.round((+x + Number.EPSILON) * 100) / 100;
@@ -1088,8 +1088,10 @@ function showLock(msg = "") {
     try {
       await bioVerify(); unlocked = true;
       document.body.classList.remove("auth"); $("#app").innerHTML = `<div class="empty">جارِ تحميل البيانات…</div>`;
-      // ponytail: a missing session after 5 s falls back to the sign-in page; onAuthStateChange also lands here once ready.
-      onSession(lastSession || await Promise.race([sb.auth.getSession().then(r => r.data.session), new Promise(r => setTimeout(() => r(lastSession), 5000))]));
+      // ponytail: waits up to 8 s for the saved session; onAuthStateChange also lands in onSession once ready.
+      const ses = lastSession || await Promise.race([sb.auth.getSession().then(r => r.data.session), new Promise(r => setTimeout(() => r(lastSession), 8000))]);
+      // No session yet means the server did not answer; say so instead of dropping to the password page.
+      if (ses) onSession(ses); else { unlocked = false; showLock("تعذّر الاتصال بالخادم. تحقق من الإنترنت ثم اضغط مرة أخرى."); }
     }
     catch(e) {
       if (!$("#bio_go") || (e.name === "AbortError" && bioAbort)) return; // replaced by a newer tap
