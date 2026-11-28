@@ -231,7 +231,7 @@ const saveUi = () => { try { localStorage.setItem("ui", JSON.stringify(ui)); } c
 
 // ---------- helpers ----------
 const $ = s => document.querySelector(s);
-const APP_VERSION = "26"; // keep in step with CACHE in sw.js
+const APP_VERSION = "27"; // keep in step with CACHE in sw.js
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 // ponytail: money kept as JS numbers rounded to 2 decimals; upgrade path is integer minor units if amounts exceed ~1e13.
 const r2 = x => Math.round((+x + Number.EPSILON) * 100) / 100;
@@ -402,7 +402,12 @@ function route(fromData) {
 }
 // Each screen is its own history entry, numbered by depth, so the phone's back goes exactly one step back.
 let navDepth = history.state?.d ?? 0, goingHome = false;
-if (history.state?.d === undefined) history.replaceState({d:0}, "");
+if (history.state?.d === undefined) history.replaceState({d:0, base:1}, "");
+// Back on the home screen must not leave the app (that showed the sign-in page, then closed it). The first entry is a
+// "base" below home; a guard home entry sits on top of it. Landing on the base puts the guard back and stays on home.
+// The guard is (re)added on a tap, because browsers skip history entries added without a user gesture.
+const armGuard = () => { if (history.state?.base && me) history.pushState({d:0}, "", "#home"); };
+addEventListener("pointerdown", armGuard, true);
 window.addEventListener("hashchange", () => {
   if (history.state?.d === undefined) history.replaceState({d: navDepth + 1}, "");
   navDepth = history.state.d;
@@ -413,7 +418,10 @@ window.addEventListener("hashchange", () => {
 const _showModal = HTMLDialogElement.prototype.showModal;
 HTMLDialogElement.prototype.showModal = function () { _showModal.call(this); history.pushState({d: navDepth, dlg:1}, ""); };
 document.addEventListener("close", () => { if (history.state?.dlg) history.back(); }, true);
-window.addEventListener("popstate", () => { if (!history.state?.dlg) document.querySelectorAll("dialog[open]").forEach(d => d.close()); });
+window.addEventListener("popstate", () => {
+  if (!history.state?.dlg) document.querySelectorAll("dialog[open]").forEach(d => d.close());
+  if (history.state?.base && me) { navDepth = 0; history.pushState({d:0}, "", "#home"); route(false); }
+});
 const roGuard = () => readOnly ? `<div class="banner">لا يمكن التعديل من هذا الحساب، العرض فقط.</div>` : "";
 const needAccounts = () => accounts.length ? "" : `<div class="banner">لا توجد حسابات بعد. <a href="#accounts">أضف أول حساب</a> (مثلاً «دبي، باسم بشار»).</div>`;
 
