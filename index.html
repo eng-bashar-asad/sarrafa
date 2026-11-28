@@ -40,10 +40,27 @@
   --top:#0b1626;--top-ink:#dfeaf5;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#132a44;--g2:#18243a;--g3:#122f3c;--g4:#1d2340;--sel:#3a3410;
   --hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
 /* TransMind theme: the animated company logo (vector, sharp at any size) sits behind the content. */
-:root[data-theme="transmind"] body{background:#05080f}
-:root[data-theme="transmind"] .tile{background:linear-gradient(160deg,rgba(24,40,64,.55),rgba(8,14,26,.5));-webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px)}
-:root[data-theme="transmind"] body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.8;
+:root[data-theme^="transmind"] body{background:#05080f}
+:root[data-theme^="transmind"] .tile{background:linear-gradient(160deg,rgba(24,40,64,.55),rgba(8,14,26,.5));-webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px)}
+:root[data-theme^="transmind"] body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.8;
   background:#05080f url("brand/transmind-logo.svg") center 45%/min(100vw,100vh,760px) no-repeat}
+/* Animated colour variants of the TransMind theme (trial set: the owner keeps the ones he likes). */
+:root[data-theme="transmind-emerald"]{--bg:#030b08;--surface:rgba(16,52,43,0.88);--ink:#eef2f6;--muted:#97c1b7;--line:#26654c;--accent:#1fbf7a;--accent-soft:#154838;--brass:#a6f5d0;--brass-soft:#172d28;--top:#08201a;--top-ink:#eef2f6;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#144134;--g2:#08201a;--g3:#0d3326;--g4:#0d2a22;--sel:#3a3410;--hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
+:root[data-theme="transmind-emerald"] body,:root[data-theme="transmind-emerald"] body::after{background-color:#030b08}
+:root[data-theme="transmind-emerald"] body::after{background-image:url("brand/transmind-emerald.svg")}
+:root[data-theme="transmind-emerald"] .tile{background:linear-gradient(160deg,rgba(16,52,43,0.55),rgba(3,11,8,0.5))}
+:root[data-theme="transmind-violet"]{--bg:#07040d;--surface:rgba(42,24,70,0.88);--ink:#eef2f6;--muted:#b1accc;--line:#584280;--accent:#8f5cff;--accent-soft:#3b265c;--brass:#e0c8ff;--brass-soft:#251b37;--top:#170c2a;--top-ink:#eef2f6;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#352155;--g2:#170c2a;--g3:#27193f;--g4:#221338;--sel:#3a3410;--hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
+:root[data-theme="transmind-violet"] body,:root[data-theme="transmind-violet"] body::after{background-color:#07040d}
+:root[data-theme="transmind-violet"] body::after{background-image:url("brand/transmind-violet.svg")}
+:root[data-theme="transmind-violet"] .tile{background:linear-gradient(160deg,rgba(42,24,70,0.55),rgba(7,4,13,0.5))}
+:root[data-theme="transmind-ruby"]{--bg:#0b0304;--surface:rgba(58,18,24,0.88);--ink:#eef2f6;--muted:#bfaab4;--line:#773038;--accent:#e63946;--accent-soft:#521b22;--brass:#ffc2c8;--brass-soft:#2f181c;--top:#22090d;--top-ink:#eef2f6;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#4a181f;--g2:#22090d;--g3:#381217;--g4:#2e0e13;--sel:#3a3410;--hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
+:root[data-theme="transmind-ruby"] body,:root[data-theme="transmind-ruby"] body::after{background-color:#0b0304}
+:root[data-theme="transmind-ruby"] body::after{background-image:url("brand/transmind-ruby.svg")}
+:root[data-theme="transmind-ruby"] .tile{background:linear-gradient(160deg,rgba(58,18,24,0.55),rgba(11,3,4,0.5))}
+:root[data-theme="transmind-teal"]{--bg:#02090c;--surface:rgba(13,54,64,0.88);--ink:#eef2f6;--muted:#98c5c8;--line:#216768;--accent:#14b8c4;--accent-soft:#114b52;--brass:#a8fff6;--brass-soft:#152e36;--top:#062129;--top-ink:#eef2f6;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#10444c;--g2:#062129;--g3:#0a353a;--g4:#0a2b33;--sel:#3a3410;--hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
+:root[data-theme="transmind-teal"] body,:root[data-theme="transmind-teal"] body::after{background-color:#02090c}
+:root[data-theme="transmind-teal"] body::after{background-image:url("brand/transmind-teal.svg")}
+:root[data-theme="transmind-teal"] .tile{background:linear-gradient(160deg,rgba(13,54,64,0.55),rgba(2,9,12,0.5))}
 :root[data-theme="emerald"]{--bg:#edf2ef;--surface:#f7faf8;--ink:#18302a;--muted:#58706a;--line:#c8d6d0;--accent:#1f6f8b;--accent-soft:#d7eaf0;--brass:#1f6f8b;--brass-soft:#e1ebe7;
   --top:#d3eadf;--top-ink:#134535;--g1:#e0f0e8;--g2:#e8ecea;--g3:#dcefee;--g4:#e5e9f2;--sh:rgba(15,50,40,.18)}
 *,*::before,*::after{box-sizing:border-box}
@@ -231,7 +248,7 @@ const saveUi = () => { try { localStorage.setItem("ui", JSON.stringify(ui)); } c
 
 // ---------- helpers ----------
 const $ = s => document.querySelector(s);
-const APP_VERSION = "27"; // keep in step with CACHE in sw.js
+const APP_VERSION = "28"; // keep in step with CACHE in sw.js
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 // ponytail: money kept as JS numbers rounded to 2 decimals; upgrade path is integer minor units if amounts exceed ~1e13.
 const r2 = x => Math.round((+x + Number.EPSILON) * 100) / 100;
@@ -915,7 +932,7 @@ document.addEventListener("click", async e => { if (e.target.id !== "forceUpdate
   try { sessionStorage.setItem("updFrom", JSON.stringify({v:APP_VERSION, t:Date.now(), unlocked})); } catch {}
   try { for (const r of await navigator.serviceWorker?.getRegistrations?.() || []) await r.unregister(); for (const k of await caches.keys()) await caches.delete(k); } catch {}
   location.replace(location.pathname + "?v=" + Date.now() + "#home"); });
-const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"],["transmind","TransMind (متحرك)"]];
+const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"],["transmind","TransMind كحلي (متحرك)"],["transmind-emerald","TransMind زمردي (متحرك)"],["transmind-violet","TransMind بنفسجي ملكي (متحرك)"],["transmind-ruby","TransMind ياقوتي (متحرك)"],["transmind-teal","TransMind فيروزي (متحرك)"]];
 document.addEventListener("click", e => { const b = e.target.closest("[data-theme-pick]"); if (!b) return;
   const t = b.dataset.themePick; if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { t ? localStorage.setItem("theme", t) : localStorage.removeItem("theme"); } catch {}
@@ -988,10 +1005,11 @@ const AUTH_MSG = {
   unexpected_failure:"حدث خطأ في خادم تسجيل الدخول. يرجى المحاولة لاحقاً."
 };
 const authMsg = e => AUTH_MSG[e.code] || ("تعذّر تسجيل الدخول (" + (e.code || e.message || "خطأ غير معروف") + ")");
+const authLogo = () => { const t = document.documentElement.dataset.theme || ""; return /^transmind-/.test(t) ? `brand/${t}.svg` : "brand/transmind-logo.svg"; };
 function showLogin(msg="") {
   $("#homeBtn").hidden = true; $("#logout").hidden = true; setStatus("");
   document.body.classList.add("auth");
-  $("#app").innerHTML = `<div class="auth"><div class="auth-logo"><img src="brand/transmind-logo.svg" alt="TransMind"></div><form class="auth-panel" id="lf" novalidate>
+  $("#app").innerHTML = `<div class="auth"><div class="auth-logo"><img src="${authLogo()}" alt="TransMind"></div><form class="auth-panel" id="lf" novalidate>
     <h1>تسجيل الدخول</h1>
     <label>البريد الإلكتروني<input type="email" id="l_email" autocomplete="username" dir="ltr" required></label>
     <label>كلمة السر<input type="password" id="l_pass" autocomplete="current-password" dir="ltr" minlength="8" required></label>
@@ -1063,7 +1081,7 @@ function showLock(msg = "") {
   loaded = {acc:false, ops:false, set:false}; accounts = []; ops = []; // nothing stays readable behind the lock
   $("#homeBtn").hidden = true; $("#logout").hidden = true; setStatus("");
   document.body.classList.add("auth");
-  $("#app").innerHTML = `<div class="auth"><div class="auth-logo"><img src="brand/transmind-logo.svg" alt="TransMind"></div><div class="auth-panel">
+  $("#app").innerHTML = `<div class="auth"><div class="auth-logo"><img src="${authLogo()}" alt="TransMind"></div><div class="auth-panel">
     <h1>التطبيق مقفل</h1>
     <button class="p" type="button" id="bio_go">فتح بالبصمة / Face ID</button>
     <button type="button" id="bio_pw">الدخول بكلمة السر بدلاً من ذلك</button>
