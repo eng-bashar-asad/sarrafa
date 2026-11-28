@@ -4,14 +4,14 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>TransMind</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#cfe5f6">
+<meta name="theme-color" content="#0b1626">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="TransMind">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" href="icon-192.png">
-<script>try{let t=localStorage.getItem("theme");if(t==="goldmind"||/^transmind-(emerald|violet|ruby)$/.test(t||"")){t="transmind";localStorage.setItem("theme",t)}if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<script>try{const keep=["transmind","transmind-teal","transmind-black","transmind-chrome"];let t=localStorage.getItem("theme");if(!keep.includes(t)){t="transmind";localStorage.setItem("theme",t)}document.documentElement.dataset.theme=t}catch(e){document.documentElement.dataset.theme="transmind"}</script>
 <script src="vendor/supabase.js"></script>
 <script src="config.js"></script>
 <style>:root{box-sizing:border-box}body{margin:0;font:14px sans-serif}[hidden]{display:none!important}</style>
@@ -30,12 +30,7 @@
   --hl:rgba(255,255,255,.9); --sh:rgba(28,40,51,.18);
   color-scheme:light;
 }
-/* Optional themes, chosen per device in settings. Default above = light blue + silver + matte white. */
-:root[data-theme="navy"]{--bg:#0f1b2b;--surface:#16263a;--ink:#e8edf3;--muted:#9fb0c2;--line:#2b3e55;--accent:#3b8fd6;--accent-soft:#1d3550;--brass:#c9a961;--brass-soft:#2a3442;
-  --top:#13233a;--top-ink:#ecdcb0;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#1b2f47;--g2:#1f2a37;--g3:#183240;--g4:#232840;--sel:#4a3f10;
-  --hl:rgba(255,255,255,.07);--sh:rgba(0,0,0,.55);color-scheme:dark}
-:root[data-theme="sand"]{--bg:#f3eee4;--surface:#faf7f0;--ink:#2e2618;--muted:#6f6450;--line:#d9cfbd;--accent:#8a5a2b;--accent-soft:#efe2cf;--brass:#8a5a2b;--brass-soft:#ece3d3;
-  --top:#e8dcc5;--top-ink:#4a3418;--g1:#f1e7d6;--g2:#efeae0;--g3:#eef0e0;--g4:#f2e6e0;--sh:rgba(60,40,15,.18)}
+/* Themes are chosen per device in settings; all are animated TransMind variants (default: navy). */
 :root[data-theme="transmind"]{--bg:#070d18;--surface:rgba(18,30,50,.88);--ink:#e9f0f7;--muted:#9fb3c8;--line:#26405f;--accent:#2f8fe0;--accent-soft:#132c47;--brass:#8fd4ff;--brass-soft:#1a2a3d;
   --top:#0b1626;--top-ink:#dfeaf5;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#132a44;--g2:#18243a;--g3:#122f3c;--g4:#1d2340;--sel:#3a3410;
   --hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
@@ -44,7 +39,7 @@
 :root[data-theme^="transmind"] .tile{background:linear-gradient(160deg,rgba(24,40,64,.55),rgba(8,14,26,.5));-webkit-backdrop-filter:blur(1.5px);backdrop-filter:blur(1.5px)}
 :root[data-theme^="transmind"] body::after{content:"";position:fixed;inset:0;z-index:-1;pointer-events:none;opacity:.8;
   background:#05080f url("brand/transmind-logo.svg") center 45%/min(100vw,100vh,760px) no-repeat}
-/* Animated colour variants of the TransMind theme (owner kept navy + turquoise; black/grey/silver/white/chrome on trial). */
+/* Animated colour variants (owner kept navy, turquoise, black, chrome). */
 :root[data-theme="transmind-teal"]{--bg:#02090c;--surface:rgba(13,54,64,0.88);--ink:#eef2f6;--muted:#98c5c8;--line:#216768;--accent:#0f8a93;--accent-soft:#114b52;--brass:#a8fff6;--brass-soft:#152e36;--top:#062129;--top-ink:#eef2f6;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#10444c;--g2:#062129;--g3:#0a353a;--g4:#0a2b33;--sel:#3a3410;--hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
 :root[data-theme="transmind-teal"] body,:root[data-theme="transmind-teal"] body::after{background-color:#02090c}
 :root[data-theme="transmind-teal"] .tile{background:linear-gradient(160deg,rgba(13,54,64,0.55),rgba(2,9,12,0.5))}
@@ -53,25 +48,11 @@
 :root[data-theme="transmind-black"] body,:root[data-theme="transmind-black"] body::after{background-color:#000000}
 :root[data-theme="transmind-black"] .tile{background:linear-gradient(160deg,rgba(28,28,28,0.55),rgba(0,0,0,0.5))}
 :root[data-theme="transmind-black"] body::after{background-image:url("brand/transmind-black.svg")}
-:root[data-theme="transmind-graphite"]{--bg:#1c1f22;--surface:rgba(74,79,85,0.88);--ink:#eef2f6;--muted:#b7bfc8;--line:#5e646a;--accent:#747b82;--accent-soft:#595e65;--brass:#eef2f5;--brass-soft:#3b3f44;--top:#2f3338;--top-ink:#eef2f6;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#54595f;--g2:#2f3338;--g3:#3e4348;--g4:#3b3f44;--sel:#3a3410;--hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
-:root[data-theme="transmind-graphite"] body,:root[data-theme="transmind-graphite"] body::after{background-color:#1c1f22}
-:root[data-theme="transmind-graphite"] .tile{background:linear-gradient(160deg,rgba(74,79,85,0.55),rgba(28,31,34,0.5))}
-:root[data-theme="transmind-graphite"] body::after{background-image:url("brand/transmind-graphite.svg")}
 :root[data-theme="transmind-chrome"]{--bg:#0a0b0d;--surface:rgba(58,64,72,0.88);--ink:#eef2f6;--muted:#bfc5cc;--line:#70767e;--accent:#979ea5;--accent-soft:#50565d;--brass:#ffffff;--brass-soft:#2c2f33;--top:#1e2226;--top-ink:#eef2f6;--ok:#4cc27a;--warn:#e0a63a;--bad:#ff6b61;--info:#7aa7ff;--g1:#494f56;--g2:#1e2226;--g3:#33373b;--g4:#2e333a;--sel:#3a3410;--hl:rgba(255,255,255,.06);--sh:rgba(0,0,0,.6);color-scheme:dark}
 :root[data-theme="transmind-chrome"] body,:root[data-theme="transmind-chrome"] body::after{background-color:#0a0b0d}
 :root[data-theme="transmind-chrome"] .tile{background:linear-gradient(160deg,rgba(58,64,72,0.55),rgba(10,11,13,0.5))}
 :root[data-theme="transmind-chrome"] body::after{background-image:url("brand/transmind-chrome.svg")}
-:root[data-theme="transmind-silver"]{--bg:#d9dee4;--surface:rgba(255,255,255,.82);--ink:#1c2833;--muted:#55616d;--line:#c3cad2;--accent:#4a6380;--accent-soft:#e3e8ee;--brass:#4a6380;--brass-soft:#e6eaee;--top:#f4f6f8;--top-ink:#1c2833;--g1:#eef1f4;--g2:#f4f6f8;--g3:#e9eef2;--g4:#eceef3;--sel:#fff0b3;--hl:rgba(255,255,255,.9);--sh:rgba(28,40,51,.2);color-scheme:light}
-:root[data-theme="transmind-silver"] body,:root[data-theme="transmind-silver"] body::after{background-color:#d9dee4}
-:root[data-theme="transmind-silver"] .tile{background:linear-gradient(160deg,rgba(255,255,255,.7),rgba(230,234,238,.55))}
-:root[data-theme="transmind-silver"] body::after{background-image:url("brand/transmind-silver.svg")}
-:root[data-theme="transmind-white"]{--bg:#f1f3f5;--surface:rgba(255,255,255,.82);--ink:#1c2833;--muted:#55616d;--line:#c3cad2;--accent:#5e7086;--accent-soft:#e3e8ee;--brass:#5e7086;--brass-soft:#e6eaee;--top:#ffffff;--top-ink:#1c2833;--g1:#eef1f4;--g2:#f4f6f8;--g3:#e9eef2;--g4:#eceef3;--sel:#fff0b3;--hl:rgba(255,255,255,.9);--sh:rgba(28,40,51,.2);color-scheme:light}
-:root[data-theme="transmind-white"] body,:root[data-theme="transmind-white"] body::after{background-color:#f1f3f5}
-:root[data-theme="transmind-white"] .tile{background:linear-gradient(160deg,rgba(255,255,255,.7),rgba(230,234,238,.55))}
-:root[data-theme="transmind-white"] body::after{background-image:url("brand/transmind-white.svg")}
-:root[data-theme="emerald"]{--bg:#edf2ef;--surface:#f7faf8;--ink:#18302a;--muted:#58706a;--line:#c8d6d0;--accent:#1f6f8b;--accent-soft:#d7eaf0;--brass:#1f6f8b;--brass-soft:#e1ebe7;
-  --top:#d3eadf;--top-ink:#134535;--g1:#e0f0e8;--g2:#e8ecea;--g3:#dcefee;--g4:#e5e9f2;--sh:rgba(15,50,40,.18)}
-*,*::before,*::after{box-sizing:border-box}
+:root[data-theme="transmind-black"] body::after{opacity:1}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--top)}
 .top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--top);color:var(--top-ink);border-bottom:1px solid var(--line);
@@ -256,7 +237,7 @@ const saveUi = () => { try { localStorage.setItem("ui", JSON.stringify(ui)); } c
 
 // ---------- helpers ----------
 const $ = s => document.querySelector(s);
-const APP_VERSION = "29"; // keep in step with CACHE in sw.js
+const APP_VERSION = "30"; // keep in step with CACHE in sw.js
 const esc = v => String(v ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 // ponytail: money kept as JS numbers rounded to 2 decimals; upgrade path is integer minor units if amounts exceed ~1e13.
 const r2 = x => Math.round((+x + Number.EPSILON) * 100) / 100;
@@ -940,7 +921,7 @@ document.addEventListener("click", async e => { if (e.target.id !== "forceUpdate
   try { sessionStorage.setItem("updFrom", JSON.stringify({v:APP_VERSION, t:Date.now(), unlocked})); } catch {}
   try { for (const r of await navigator.serviceWorker?.getRegistrations?.() || []) await r.unregister(); for (const k of await caches.keys()) await caches.delete(k); } catch {}
   location.replace(location.pathname + "?v=" + Date.now() + "#home"); });
-const THEMES = [["","أزرق فاتح وفضي"],["navy","كحلي ليلي"],["sand","رملي"],["emerald","أخضر زمردي"],["transmind","TransMind كحلي (متحرك)"],["transmind-teal","TransMind فيروزي (متحرك)"],["transmind-black","TransMind أسود (متحرك)"],["transmind-graphite","TransMind رصاصي (متحرك)"],["transmind-silver","TransMind فضي (متحرك)"],["transmind-white","TransMind أبيض لؤلؤي (متحرك)"],["transmind-chrome","TransMind كروم لامع (متحرك)"]];
+const THEMES = [["transmind","كحلي (متحرك)"],["transmind-teal","فيروزي (متحرك)"],["transmind-black","أسود (متحرك)"],["transmind-chrome","كروم لامع (متحرك)"]];
 document.addEventListener("click", e => { const b = e.target.closest("[data-theme-pick]"); if (!b) return;
   const t = b.dataset.themePick; if (t) document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   try { t ? localStorage.setItem("theme", t) : localStorage.removeItem("theme"); } catch {}
